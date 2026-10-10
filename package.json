@@ -1,0 +1,8 @@
+{
+  "name": "kawaii-life",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "11.1.0"
+  }
+}
