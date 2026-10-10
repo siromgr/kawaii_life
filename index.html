@@ -500,14 +500,23 @@ input{font:inherit;color:inherit}
 .voiceRow .btn{padding:2px 14px;font-size:14px}
 .storeInfo{margin:4px 0;font-size:clamp(11px,2.6vh,14px);color:var(--soft);font-weight:600}
 
+.switchRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.switch{position:relative;width:52px;height:30px;flex:none;border:none;border-radius:999px;background:#ddd0e2;transition:background .2s;padding:0}
+.switch i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:left .2s}
+.switch.on{background:var(--pink)}.switch.on i{left:25px}
+.swTxt{font-weight:800;font-size:14px;color:var(--soft)}
+#voiceBox .voiceRow{display:flex;gap:8px;align-items:flex-end;flex-wrap:nowrap}
+#voiceBox .voiceRow label{flex:1;min-width:0}
+#voiceBox .voiceRow select{text-overflow:ellipsis}
+#voiceBox .voiceRow .btn{flex:none;padding:6px 14px;font-size:14px;margin-bottom:2px}
+
 </style>
 </head>
 <body>
 <div id="nojs" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;background:#ffe9f4;color:#5b2a5e;font-family:sans-serif;padding:24px;text-align:center;overflow:auto">
   <h2 style="color:#ff6fae;margin:10px 0">Kawaii Life chưa chạy được ở đây</h2>
   <p>Trình xem file của iPhone/iPad (ứng dụng Tệp) chỉ hiện trang tĩnh, không chạy được game.</p>
-  <p><b>Cách chơi:</b> mở link chơi online bằng Safari, rồi bấm nút Chia sẻ → "Thêm vào MH chính" để có biểu tượng game trên màn hình.</p>
-  <p id="nojsLink"><a href="https://claude.ai/artifact/X67jFxiQJUeoGUK1Wk5fyd" style="color:#7a58e8;font-weight:bold;word-break:break-all">https://claude.ai/artifact/X67jFxiQJUeoGUK1Wk5fyd</a></p>
+  <p><b>Cách chơi:</b> hãy mở game bằng trình duyệt Safari hoặc Chrome, rồi bấm nút Chia sẻ → "Thêm vào MH chính" để có biểu tượng game trên màn hình.</p>
   <p style="font-size:13px">© 2026, by Ngọc Quán - 0949.868.789</p>
 </div>
 <div id="app">
@@ -539,9 +548,11 @@ input{font:inherit;color:inherit}
             </div>
             <div class="lbl">Màu giao diện</div>
             <div class="themeSel" id="themeSel"></div>
-            <div class="lbl">🔊 Đọc câu hỏi và đáp án trước khi tính giờ</div>
-            <div class="row2"><label>Giọng tiếng Việt<select id="inVoiceVi"></select></label><label>Giọng tiếng Anh<select id="inVoiceEn"></select></label></div>
-            <div class="voiceRow"><button class="btn white" id="voiceTest" type="button">▶ Nghe thử</button><span class="sub" id="voiceNote"></span></div>
+            <div class="switchRow"><span class="lbl">🔊 Đọc câu hỏi và đáp án trước khi tính giờ</span><button type="button" class="switch" id="voiceOn" role="switch" aria-checked="false" aria-label="Bật tắt đọc câu hỏi"><i></i></button><span class="swTxt" id="voiceOnTxt">Tắt</span></div>
+            <div id="voiceBox" style="display:none">
+              <div class="voiceRow"><label>Giọng tiếng Việt<select id="inVoiceVi"></select></label><label>Giọng tiếng Anh<select id="inVoiceEn"></select></label><button class="btn white" id="voiceTest" type="button">▶ Nghe thử</button></div>
+              <span class="sub" id="voiceNote"></span>
+            </div>
             <div class="row2">
               <label>Tuổi<input type="number" id="inAge" min="4" max="30" value="9"></label>
               <label>Số vòng để lên cấp<input type="number" id="inCycle" min="1" max="10" value="2"></label>
@@ -1725,8 +1736,13 @@ async function probeServer(){
   const lb=await get("/api/leaderboard"); SRV.ok=!!(lb&&lb.ok);
   const tt=await get("/api/tts?check=1"); SRV.tts=!!(tt&&tt.enabled);
 }
-let VOICE={vi:"auto",en:"auto"};
-try{ Object.assign(VOICE, JSON.parse(localStorage.getItem("kawaiiLife_voice")||"{}")); }catch(e){}
+let VOICE={on:false,vi:"auto",en:"auto"};   // mặc định tắt đọc, bé tự bật ở màn đầu
+try{ const o=JSON.parse(localStorage.getItem("kawaiiLife_voice")||"{}"); if(o && o.on===undefined) o.on=false; Object.assign(VOICE,o); }catch(e){}
+function renderVoiceSwitch(){
+  const sw=$("#voiceOn"); if(!sw) return;
+  sw.classList.toggle("on",!!VOICE.on); sw.setAttribute("aria-checked",VOICE.on?"true":"false");
+  $("#voiceOnTxt").textContent=VOICE.on?"Bật":"Tắt"; $("#voiceBox").style.display=VOICE.on?"block":"none";
+}
 function saveVoice(){ try{ localStorage.setItem("kawaiiLife_voice",JSON.stringify(VOICE)); }catch(e){} }
 function allVoices(){ try{ return ttsOk ? speechSynthesis.getVoices() : []; }catch(e){ return []; } }
 function viScore(v){ const n=v.name||""; return /HoaiMy|NamMinh|Natural/i.test(n)?4: /Google/i.test(n)?3: /Linh/i.test(n)?2: 1; }
@@ -1739,13 +1755,14 @@ function pickVoice(lang){
 }
 function onlineVoice(){ if(!SRV.tts) return null; const p=VOICE.vi; if(p&&p.startsWith("fpt:")) return p.slice(4); return p==="auto" ? "banmai" : null; }
 function renderVoiceSel(){
+  renderVoiceSwitch();
   const vs=allVoices();
   const mk=(id,lang)=>{
     const sel=$("#"+id); if(!sel) return;
     const list=vs.filter(v=>lang==="vi"?/^vi/i.test(v.lang):/^en/i.test(v.lang));
     if(lang==="vi") list.sort((a,b)=>viScore(b)-viScore(a));
     const online = lang==="vi"&&SRV.tts ? FPT_VOICES.map(([k,n])=>`<option value="fpt:${k}">🌐 ${n} (FPT.AI)</option>`).join("") : "";
-    sel.innerHTML=`<option value="off">🔇 Tắt đọc</option><option value="auto">Tự động (giọng tốt nhất)</option>`+online+list.map(v=>`<option value="${esc(v.voiceURI)}">${esc(v.name)} (${esc(v.lang)})</option>`).join("");
+    sel.innerHTML=`<option value="off">🔇 Tắt đọc</option><option value="auto">Tự động</option>`+online+list.map(v=>`<option value="${esc(v.voiceURI)}">${esc(v.name)} (${esc(v.lang)})</option>`).join("");
     sel.value=[...sel.options].some(o=>o.value===VOICE[lang]) ? VOICE[lang] : "auto";
     sel.disabled = !ttsOk && !(lang==="vi"&&SRV.tts);
     sel.onchange=()=>{ VOICE[lang]=sel.value; saveVoice(); };
@@ -1797,12 +1814,12 @@ function speakBrowser(parts,lang){
   });
 }
 async function speakParts(parts,lang){
-  if(VOICE[lang]==="off") return false;
+  if(!VOICE.on || VOICE[lang]==="off") return false;
   const ov = lang==="vi" ? onlineVoice() : null;
   if(ov){ const ok=await playOnline(parts.filter(Boolean).map(p=>/[.!?…:]$/.test(p)?p:p+".").join(" "),ov); if(ok) return true; }
   return speakBrowser(parts,lang);
 }
-function canRead(lang){ if(VOICE[lang]==="off") return false; if(lang==="vi" && onlineVoice()) return true; if(!ttsOk) return false; return lang==="en" || !!pickVoice("vi"); }
+function canRead(lang){ if(!VOICE.on || VOICE[lang]==="off") return false; if(lang==="vi" && onlineVoice()) return true; if(!ttsOk) return false; return lang==="en" || !!pickVoice("vi"); }
 
 /* =========================================================
    TRẠNG THÁI & LƯU TRỮ
@@ -2064,6 +2081,11 @@ function updateAgeHint(){
   $("#ageHint").textContent = `${age} tuổi: câu hỏi mức ${g===0?"mầm non":"lớp "+g}, bắt đầu từ ${age<=5?"Mẫu giáo":"Tiểu học"}. Mỗi vòng là làm đủ các hoạt động trong một ngày.`;
 }
 $("#inAge").addEventListener("input",updateAgeHint);
+$("#voiceOn").onclick=()=>{
+  VOICE.on=!VOICE.on;
+  if(VOICE.on && VOICE.vi==="off" && VOICE.en==="off"){ VOICE.vi="auto"; VOICE.en="auto"; }
+  saveVoice(); renderVoiceSel(); tone([[VOICE.on?880:520,.08]]); if(VOICE.on) unlockAudio();
+};
 $("#voiceTest").onclick=async()=>{ unlockAudio(); renderVoiceSel();
   if(VOICE.vi==="off" && VOICE.en==="off"){ toast("Bé đang tắt cả hai giọng đọc"); return; }
   await speakParts(["Xin chào! Mình sẽ đọc câu hỏi cho bé nghe nhé."],"vi"); await speakParts(["Hello! Let's learn English together."],"en"); };
@@ -3143,7 +3165,7 @@ async function rankScene(){
   const paint=async()=>{
     const list=rankSort(await allEntries());
     const medal=i=>["🥇","🥈","🥉"][i]||`#${i+1}`;
-    const store = SRV.ok ? `🌐 Bảng xếp hạng online, cập nhật lên server (xem file <a href="/kawaii-players.txt" target="_blank">kawaii-players.txt</a>). File json của bé lưu trên máy này${FS.dir&&FS.ok?` và thư mục “${esc(FS.name)}”`:""}.` : FS.dir&&FS.ok ? `📁 Đang lưu vào thư mục “${esc(FS.name)}” (file ${REG_FILE} và các file kawaii-*.json)`
+    const store = SRV.ok ? `🌐 Bảng xếp hạng online của tất cả các bạn chơi.` : FS.dir&&FS.ok ? `📁 Đang lưu vào thư mục “${esc(FS.name)}”`
       : FS.dir ? `📁 Đã chọn thư mục “${esc(FS.name)}” nhưng cần cho phép lại` : fsSupported ? "💾 Đang lưu trong trình duyệt này" : "💾 Đang lưu trong trình duyệt này (máy này chưa hỗ trợ lưu ra thư mục)";
     openScene("rank wide",`<div class="qHead"><span class="qTag riddle">🏆 Bảng xếp hạng</span><span class="qTitle">Cấp cao nhất › Số dư › Thời gian đạt kỷ lục</span><button class="btn white" id="rkClose" style="margin-left:auto">Đóng</button></div>
       <p class="storeInfo">${store} ${fsSupported&&!(FS.dir&&FS.ok)?`<button class="btn lav" id="rkConnect" style="padding:2px 12px;font-size:14px">${FS.dir?"🔓 Cho phép lại":"📁 Kết nối thư mục"}</button>`:""}</p>
