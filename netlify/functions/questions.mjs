@@ -59,6 +59,7 @@ function classify(status, msg) {
   if (status === 404 || /not found|decommission|does not exist|not supported|unknown model|no longer/.test(m)) return "model";
   return "other";
 }
+let BEST_MEM = null; // nhớ model chạy tốt khi server đang "ấm"
 let DEADLINE = 0; // thời điểm phải xong (Netlify cắt hàm sau ~10 giây)
 async function callJSON(url, opts) {
   const left = DEADLINE ? DEADLINE - Date.now() : 8000;
@@ -98,8 +99,8 @@ function openAI(base, key) {
 const uniq = a => [...new Set(a.filter(Boolean))];
 function providers() {
   const e = process.env, list = [];
-  if (e.GEMINI_API_KEY) list.push({ name: "gemini", run: askGemini, models: uniq([e.GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-flash-latest", "gemini-2.0-flash"]) });
-  if (e.GROQ_API_KEY) list.push({ name: "groq", run: openAI("https://api.groq.com/openai/v1", e.GROQ_API_KEY), models: uniq([e.GROQ_MODEL, "llama-3.3-70b-versatile", "openai/gpt-oss-120b", "llama-3.1-8b-instant", "openai/gpt-oss-20b"]) });
+  if (e.GROQ_API_KEY) list.push({ name: "groq", run: openAI("https://api.groq.com/openai/v1", e.GROQ_API_KEY), models: uniq([e.GROQ_MODEL, "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"]) });
+  if (e.GEMINI_API_KEY) list.push({ name: "gemini", run: askGemini, models: uniq([e.GEMINI_MODEL, "gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-flash-lite-latest"]) });
   if (e.OPENROUTER_API_KEY && e.OPENROUTER_MODEL) list.push({ name: "openrouter", run: openAI("https://openrouter.ai/api/v1", e.OPENROUTER_API_KEY), models: [e.OPENROUTER_MODEL] });
   if (e.AI_BASE_URL && e.AI_API_KEY && e.AI_MODEL) list.push({ name: "custom", run: openAI(e.AI_BASE_URL, e.AI_API_KEY), models: [e.AI_MODEL] });
   if (e.ANTHROPIC_API_KEY) list.push({ name: "anthropic", run: askAnthropic, models: uniq([e.ANTHROPIC_MODEL, "claude-haiku-5-5"]) });
@@ -107,13 +108,16 @@ function providers() {
 }
 /* thử lần lượt các model của 1 nhà cung cấp; khóa sai / hết lượt thì dừng luôn */
 async function runProvider(p, prompt, attempts = []) {
-  let last;
-  for (const m of p.models) {
+  let last; const queue = p.models.slice(), tried = new Set();
+  while (queue.length) {
+    const m = queue.shift(); if (tried.has(m)) continue; tried.add(m);
     try { const text = await p.run(prompt, m); attempts.push({ model: m, ok: true }); return { text, model: m }; }
     catch (e) {
       if (!(e instanceof AIError)) e = new AIError(String(e.message || e), "network", 0);
       attempts.push({ model: m, ok: false, status: e.status, error: String(e.message).slice(0, 200) });
       last = e; if (e.kind === "key" || e.kind === "quota") break;
+      const sug = String(e.message).match(/use (?:models\/)?([\w.\-]+(?:flash|pro|lite)[\w.\-]*)/i);   // vd: "please use models/gemini-3.5-flash-lite"
+      if (e.kind === "model" && sug && !tried.has(sug[1])) queue.unshift(sug[1]);
     }
   }
   throw last || new AIError("no model", "other");
@@ -143,10 +147,11 @@ export default async (req) => {
           const j = await callJSON(listUrl[p.name][0], { headers: listUrl[p.name][1] });
           const names = (j.models || j.data || []).map(m => String(m.name || m.id).replace(/^models\//, ""));
           res.key = "✅ Khóa hợp lệ"; res.modelsOk = p.models.filter(m => names.includes(m));
-          if (res.modelsOk.length) p.models = res.modelsOk;
+          if (p.name === "gemini") { const fl = names.filter(n => /^gemini-[\d.]+-flash/.test(n) && !/image|tts|audio|live|exp|preview/i.test(n)).sort().reverse(); p.models = uniq([...res.modelsOk, ...fl]).slice(0, 4); }
+          else if (res.modelsOk.length) p.models = res.modelsOk;
         } catch (err) { res.key = "❌ " + (KIND_VI[err.kind] || err.kind); res.status = err.status; res.error = String(err.message).slice(0, 300); res.loi = KIND_VI[err.kind]; res.ms = Date.now() - t0; return res; }
       }
-      const attempts = []; p.models = p.models.slice(0, 2);
+      const attempts = []; p.models = p.models.slice(0, 3);
       try { const r = await runProvider(p, prompt, attempts); const qs = parse(r.text);
         Object.assign(res, { ok: qs.length > 0, model: r.model, sample: qs[0]?.q || r.text.slice(0, 160), loi: qs.length ? "" : "AI trả lời sai định dạng" }); }
       catch (err) { Object.assign(res, { status: err.status, error: String(err.message).slice(0, 300), loi: KIND_VI[err.kind] || err.kind }); }
@@ -167,9 +172,14 @@ export default async (req) => {
   if (list.length && used < limit) {
     DEADLINE = Date.now() + 9000;
     const prompt = buildPrompt(b);
+    const best = (await sget(store, "best", "json")) || BEST_MEM || {};
+    list.sort((a, c) => (best.provider === c.name) - (best.provider === a.name));
+    for (const p of list) if (best.provider === p.name && best.model) p.models = uniq([best.model, ...p.models]);
     for (const p of list) {
       try {
         const r = await runProvider(p, prompt);
+        BEST_MEM = { provider: p.name, model: r.model };
+        if (best.provider !== p.name || best.model !== r.model) await sset(store, "best", BEST_MEM, true);
         const questions = parse(r.text);
         if (!questions.length) throw new AIError("AI trả về sai định dạng", "other");
         await sset(store, "count/" + day, String(used + 1));

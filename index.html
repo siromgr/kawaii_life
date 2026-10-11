@@ -745,7 +745,7 @@ const SHOP=[
   {id:"ip17",name:"iPhone 17",emo:"📱",price:80,lv:5,perk:"+4 giây mỗi câu hỏi",sec:4},
   {id:"ip18",name:"iPhone 18",emo:"📱",price:100,lv:5,perk:"+5 giây mỗi câu hỏi",sec:5}
 ];
-const APP_VERSION="11/10/2026 (bản 5)";
+const APP_VERSION="11/10/2026 (bản 6)";
 const BASE_ACTS=["study","eat","bath","sleep"], MID_ACTS=[...BASE_ACTS,"chores","baby"];
 const LEVELS = [
   {name:"Mẫu giáo", emo:"🧸", time:60, acts:BASE_ACTS},
@@ -1393,9 +1393,9 @@ async function refillAI(sub){
   try{
     const ctrl=new AbortController(); const tm=setTimeout(()=>ctrl.abort(),25000);
     let r;
-    if(SRV.ai) r=await fetch("/api/questions",{method:"POST",signal:ctrl.signal,headers:{"content-type":"application/json"},
+    if(!SRV.ai){ clearTimeout(tm); aiBusy[sub]=false; return; }
+    r=await fetch("/api/questions",{method:"POST",signal:ctrl.signal,headers:{"content-type":"application/json"},
         body:JSON.stringify({subject:sub,grade:S.baseGrade,diff:qDiff(),career:S.career||"",cambLevel:S.cambLevel})});
-    else r=await fetch("https://text.pollinations.ai/"+encodeURIComponent(aiPrompt(sub))+"?json=true&seed="+R(1,999999),{signal:ctrl.signal});
     clearTimeout(tm);
     let txt=await r.text();
     if(SRV.ai){ let j={}; try{ j=JSON.parse(txt); }catch(e){} if(j.source) aiSource=j.source; if(j.errors&&j.errors.length) aiLastErr=j.errors.join(" | ");
