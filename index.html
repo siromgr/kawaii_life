@@ -579,6 +579,26 @@ input{font:inherit;color:inherit}
 .tile .tn{font-size:clamp(14px,3.4vh,19px);white-space:normal;line-height:1.15}
 .tile .tp{font-size:clamp(11px,2.6vh,13px);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
+/* v9: ô nhiệm vụ chỉ hiện tên, màu theo loại */
+.tile.k-earn{background:var(--mintL);border-color:#a8ecd2;box-shadow:0 5px 0 #b5e9d5}
+.tile.k-spend{background:#ffe3e8;border-color:#ffc2cc;box-shadow:0 5px 0 #f7c9d2}
+.tile.k-mix{background:var(--sunL);border-color:#ffe08a;box-shadow:0 5px 0 #f2d58a}
+.tile.k-shop{background:var(--lavL);border-color:#d9ccff;box-shadow:0 5px 0 #d6cbf5}
+.tile.k-mix .tp{background:#fff;color:#8a5a00}
+.tile.lock{background:#f8f3f9;border-color:#f0e6f2;box-shadow:none}
+.tile .tn{font-size:clamp(15px,3.8vh,20px)}
+.intro{width:min(600px,94vw)}
+.introBox{display:flex;flex-direction:column;gap:6px;text-align:left;margin:6px 0}
+.iRow{display:grid;grid-template-columns:96px 1fr;gap:8px;background:var(--lavL);border-radius:14px;padding:6px 10px;font-weight:600;font-size:clamp(13px,3.1vh,16px);color:var(--ink)}
+.iRow.good{background:var(--mintL)}.iRow.bad{background:#ffe3e8}
+.iRow b{white-space:nowrap}
+
+.diag{width:min(680px,96vw)}
+.diagBox{text-align:left;display:flex;flex-direction:column;gap:4px;max-height:52vh;overflow:auto;margin:6px 0;user-select:text;-webkit-user-select:text}
+.dRow{background:#f6f0fa;border-radius:10px;padding:4px 10px;font-size:13px;font-weight:600;line-height:1.35;word-break:break-word}
+.dRow.good{background:var(--mintL)}.dRow.bad{background:#ffe3e8}.dRow.warn{background:var(--sunL)}
+.dRow.sub{background:transparent;padding:0 10px 0 24px;color:var(--soft)}
+
 </style>
 </head>
 <body>
@@ -608,6 +628,7 @@ input{font:inherit;color:inherit}
             <div class="heroM" id="heroM"></div>
             <h1>Kawaii Life</h1>
             <div class="copy heroCopy">© 2026, by Ngọc Quán - 0949.868.789</div>
+            <div class="copy heroCopy" id="verTxt"></div>
             <p>Tạo nhân vật, lớn lên từ mẫu giáo tới khi đi làm, trả lời đúng để kiếm tiền!</p>
           </div>
           <div class="form">
@@ -712,7 +733,8 @@ const CFG = {
   tutorMax:2, tutorBelow:2, tutorQ:10,
   workMax:10,        // số lượt đi làm tối đa mỗi ngày
   wheelCost:2,
-  boxFrom:3, boxBase:15, boxStep:5,   // hộp thẻ huy hiệu: mở từ THPT, giá 15$ (+5$ mỗi cấp), mua tối đa 1/2/3 lần mỗi cấp menuShowSec:5, listenPlays:2, rpsWin:2, rpsLose:1, cookReward:5, cookFail:2, babyTasks:3
+  menuShowSec:5, listenPlays:2, rpsWin:2, rpsLose:1, cookReward:5, cookFail:2, babyTasks:3,
+  boxFrom:3, boxBase:15, boxStep:5    // hộp thẻ huy hiệu: mở từ THPT, giá 15$ (+5$ mỗi cấp), mua tối đa 1/2/3 lần mỗi cấp
 };
 /* cửa hàng: lv = cấp học mở bán (2 = THCS, 4 = Đại học, 5 = Đi làm) */
 const SHOP=[
@@ -723,6 +745,7 @@ const SHOP=[
   {id:"ip17",name:"iPhone 17",emo:"📱",price:80,lv:5,perk:"+4 giây mỗi câu hỏi",sec:4},
   {id:"ip18",name:"iPhone 18",emo:"📱",price:100,lv:5,perk:"+5 giây mỗi câu hỏi",sec:5}
 ];
+const APP_VERSION="11/10/2026 (bản 5)";
 const BASE_ACTS=["study","eat","bath","sleep"], MID_ACTS=[...BASE_ACTS,"chores","baby"];
 const LEVELS = [
   {name:"Mẫu giáo", emo:"🧸", time:60, acts:BASE_ACTS},
@@ -1340,7 +1363,7 @@ function genEye(g,d){
 /* =========================================================
    AI (tùy chọn) — sinh sẵn câu hỏi kèm đáp án, chấm ngay trên máy
    ========================================================= */
-const aiPool={math:[],en:[],vn:[]}; const aiBusy={}; let aiOk=0, aiFail=0;
+const aiPool={math:[],en:[],vn:[]}; const aiBusy={}; let aiOk=0, aiFail=0, aiLastErr="", aiSource="";
 function aiPrompt(sub){
   const g=S.baseGrade, d=qDiff();
   const subj={math:"Toán",en:"Tiếng Anh (ngữ pháp đơn giản). Câu hỏi và đáp án viết HOÀN TOÀN bằng tiếng Anh, không dùng tiếng Việt",vn:"Tiếng Việt (từ loại, chính tả, từ đồng nghĩa/trái nghĩa, thành ngữ)"}[sub];
@@ -1374,12 +1397,14 @@ async function refillAI(sub){
         body:JSON.stringify({subject:sub,grade:S.baseGrade,diff:qDiff(),career:S.career||"",cambLevel:S.cambLevel})});
     else r=await fetch("https://text.pollinations.ai/"+encodeURIComponent(aiPrompt(sub))+"?json=true&seed="+R(1,999999),{signal:ctrl.signal});
     clearTimeout(tm);
-    if(!r.ok) throw new Error("http "+r.status);
-    let txt=await r.text(); if(SRV.ai){ try{ txt=JSON.stringify(JSON.parse(txt).questions||[]); }catch(e){} }
+    let txt=await r.text();
+    if(SRV.ai){ let j={}; try{ j=JSON.parse(txt); }catch(e){} if(j.source) aiSource=j.source; if(j.errors&&j.errors.length) aiLastErr=j.errors.join(" | ");
+      if(!r.ok) throw new Error(j.error||("HTTP "+r.status)); txt=JSON.stringify(j.questions||[]); }
+    else if(!r.ok) throw new Error("HTTP "+r.status);
     const items=parseAI(txt);
     if(!items.length) throw new Error("empty");
     aiPool[sub].push(...items); aiOk++;
-  }catch(e){ aiFail++; }
+  }catch(e){ aiFail++; if(!aiLastErr || !SRV.ai) aiLastErr=String(e.message||e); }
   finally{ aiBusy[sub]=false; }
 }
 function prefetchAI(){ if(S&&S.ai) S.subjects.forEach(s=>refillAI(s)); }
@@ -1826,7 +1851,7 @@ const SRV={ok:false, tts:false};
 const FPT_VOICES=[["banmai","Ban Mai – nữ miền Bắc"],["thuminh","Thu Minh – nữ miền Bắc"],["leminh","Lê Minh – nam miền Bắc"],["myan","Mỹ An – nữ miền Trung"],["giahuy","Gia Huy – nam miền Trung"],["lannhi","Lan Nhi – nữ miền Nam"],["linhsan","Linh San – nữ miền Nam"]];
 async function probeServer(){
   if(!/^https?:$/.test(location.protocol) || /(^|\.)claude\.ai$/.test(location.hostname)) return;
-  const get=async(u)=>{ const c=new AbortController(); const t=setTimeout(()=>c.abort(),4000); try{ const r=await fetch(u,{signal:c.signal,cache:"no-store"}); clearTimeout(t); return r.ok?await r.json():null; }catch(e){ clearTimeout(t); return null; } };
+  const get=async(u)=>{ const c=new AbortController(); const t=setTimeout(()=>c.abort(),4000); try{ const r=await fetch(u,{signal:c.signal,cache:"no-store"}); clearTimeout(t); if(u.includes("questions")) SRV.aiHttp=r.status; if(!r.ok) return null; try{ return await r.json(); }catch(e){ if(u.includes("questions")) SRV.aiHttp="không phải JSON"; return null; } }catch(e){ clearTimeout(t); if(u.includes("questions")) SRV.aiHttp="không kết nối"; return null; } };
   const lb=await get("/api/leaderboard"); SRV.ok=!!(lb&&lb.ok);
   const tt=await get("/api/tts?check=1"); SRV.tts=!!(tt&&tt.enabled);
   const aq=await get("/api/questions"); SRV.ai=!!(aq&&aq.enabled); if(SRV.ai && S) prefetchAI();
@@ -2374,18 +2399,18 @@ function renderHub(){
     if(a==="tutor"){
       const av=tutorAvail();
       const tip = tutorLeft()<=0 ? "Đã học hết 2 khóa" : av ? `Còn ${tutorLeft()} khóa, đúng +${CFG.right}$` : `Mở khi còn dưới ${CFG.tutorBelow}$`;
-      return `<button class="tile earn ${av?"glow":"lock"}" data-a="tutor" ${av?"":"disabled"}><span class="em">${T.emo}</span><span class="tn">${T.name}</span><span class="tp">${av?"":"🔒 "}${tip}</span></button>`;
+      return `<button class="tile k-earn ${av?"glow":"lock"}" data-a="tutor" ${av?"":"disabled"}><span class="em">${T.emo}</span><span class="tn">${T.name}</span>${av?"":`<span class="tp">🔒 ${tutorLeft()<=0?"Đã học hết":"Mở khi còn dưới "+CFG.tutorBelow+"$"}</span>`}</button>`;
     }
     if(a==="shop"){
       const open=S.levelIdx>=2, cnt=SHOP.filter(x=>S.owned[x.id]).length;
-      return `<button class="tile shop ${open?"":"lock"}" data-a="shop" ${open?"":"disabled"}><span class="em">🛒</span><span class="tn">Cửa hàng</span><span class="tp">${open?`Đã mua ${cnt} món`:"🔒 Mở ở THCS"}</span></button>`;
+      return `<button class="tile k-shop ${open?"":"lock"}" data-a="shop" ${open?"":"disabled"}><span class="em">🛒</span><span class="tn">Cửa hàng</span>${open?"":`<span class="tp">🔒 Mở ở THCS</span>`}</button>`;
     }
     if(a==="work" && d.done.work && L.acts.includes("work")){
       const wc=d.workCount||0, more=wc<CFG.workMax;
-      return `<button class="tile earn ${more?"extra":"done"}" data-a="work" ${more?"":"disabled"}><span class="em">${T.emo}</span><span class="tn">${more?"Làm thêm":T.name}</span><span class="tp">Đã làm ${wc}/${CFG.workMax} lượt</span></button>`;
+      return `<button class="tile k-earn ${more?"extra":"done"}" data-a="work" ${more?"":"disabled"}><span class="em">${T.emo}</span><span class="tn">${more?"Làm thêm":T.name}</span><span class="tp">${wc}/${CFG.workMax} lượt</span></button>`;
     }
     if(!L.acts.includes(a)){ const need=a==="work"||a==="read"?"Mở ở Đại học":a==="cook"||a==="sell"?"Mở ở THCS":"Mở ở Tiểu học"; return `<button class="tile lock" disabled><span class="em">${T.emo}</span><span class="tn">${T.name}</span><span class="tp">🔒 ${need}</span></button>`; }
-    return `<button class="tile ${T.kind} ${d.done[a]?"done":""}" data-a="${a}" ${d.done[a]?"disabled":""}><span class="em">${T.emo}</span><span class="tn">${T.name}</span><span class="tp">${tileTip(a)}</span></button>`;
+    return `<button class="tile ${a==="baby"?"k-mix":"k-"+T.kind} ${d.done[a]?"done":""}" data-a="${a}" ${d.done[a]?"disabled":""}><span class="em">${T.emo}</span><span class="tn">${T.name}</span>${a==="baby"?`<span class="tp">Nở hoa hay bế tắc?</span>`:""}</button>`;
   }).join("");
   el.innerHTML=`<div class="hubHead"><span class="day">${L.emo} ${L.name}: ngày ${(S.dayCount||0)+1}</span><span class="badgeRow mini" title="Huy hiệu cần để lên cấp">${dots}</span>
       <span class="qProg">⏱ ${L.time+phoneSec()}s/câu</span>${d.ready?`<button class="btn mint" id="nextDay" style="margin-left:auto">🌙 Sang ngày mới</button>`:""}</div>
@@ -2406,6 +2431,12 @@ async function doAct(a){
   busy=true;
   try{
     const L=lv(); let doneNow=false;
+    if(a==="sleep" && L.acts.some(x=>x!=="sleep" && !S.day.done[x])){
+      const rest=L.acts.filter(x=>x!=="sleep" && !S.day.done[x]);
+      await dialog({mascot:1,mood:"think",title:"Bé ơi, còn việc phải làm kìa!",html:`<p>Chưa ngủ được đâu nha. Bé còn phải làm: <b>${rest.map(x=>ACTS[x].emo+" "+ACTS[x].name).join(", ")}</b>.</p><p>Đi ngủ là việc làm sau cùng trong ngày.</p>`,buttons:[{label:"Làm tiếp nào",cls:"mint",val:1}]});
+      return;
+    }
+    if(a!=="shop" && !(await taskIntro(a))) return;
     if(a==="study"||a==="work"){
       const n = a==="study"?CFG.studyQ:CFG.workQ;
       if(a==="work") S.day.workCount=(S.day.workCount||0)+1;
@@ -2466,7 +2497,7 @@ function bathScene(){
       if(spinning||bathing) return; spinning=true;
       document.querySelectorAll("#gameBox button").forEach(x=>x.disabled=true);
       const cards=[...document.querySelectorAll(`.opts[data-k="${key}"] .opt`)], steps=12+R(0,9); let i=0;
-      for(let s=0;s<=steps;s++){ cards.forEach(c=>c.classList.remove("hit")); i=s%5; cards[i].classList.add("hit"); sTick(); await sleep(70+s*s*1.4); }
+      for(let s=0;s<=steps;s++){ cards.forEach(c=>c.classList.remove("hit")); i=s%5; cards[i].classList.add("hit"); sTick(); await sleep(60+Math.pow(s/steps,3)*260); }
       const o=b[key+"Opts"][i];
       spinning=false;
       if(!canPay(o.p)){ toast(`Quay trúng ${o.n} giá ${o.p}$ nhưng bé chưa đủ tiền. Quay lại nhé!`,3200); paint(); return; }
@@ -2672,9 +2703,11 @@ $("#btnImport").onclick=()=>$("#fileIn").click();
 $("#btnMenu").onclick=async()=>{
   if(busy){ toast("Bé làm xong việc đang làm rồi mở cài đặt nhé"); return; }
   const v=await dialog({mascot:null,title:"⚙️ Cài đặt",cls:"menu",
-    html:`<p>Game tự lưu trên máy sau mỗi bước. Bé có thể tải file lưu để giữ lại hoặc chép sang máy khác.</p>
-      ${S&&S.ai?`<p style="font-size:13px">Câu hỏi AI: ${aiOk} lần lấy được, ${aiFail} lần lỗi (lỗi thì dùng câu hỏi có sẵn).</p>`:""}`,
-    buttons:[{label:"💾 Tải file lưu",cls:"lav",val:"exp"},{label:"📂 Mở file lưu",cls:"white",val:"imp"},{label:muted?"🔊 Bật âm thanh":"🔇 Tắt âm thanh",cls:"white",val:"snd"},{label:"🔄 Chơi lại từ đầu",cls:"",val:"new"},{label:"Đóng",cls:"white",val:null}]});
+    html:`<p style="font-size:12px">📦 Phiên bản: <b>${APP_VERSION}</b></p><p>Game tự lưu trên máy sau mỗi bước. Bé có thể tải file lưu để giữ lại hoặc chép sang máy khác.</p>
+      <p style="font-size:13px;text-align:left">🤖 Server AI: ${SRV.ai?"✅ đã kết nối":`❌ chưa kết nối${SRV.aiHttp?` (HTTP ${SRV.aiHttp})`:""}`}${S&&!S.ai?" · lượt chơi này đang tắt câu hỏi AI":""}</p>
+      ${S&&S.ai?`<p style="font-size:13px;text-align:left">🤖 AI: ${SRV.ai?"đã kết nối server":"chưa kết nối được server AI"} · lấy được ${aiOk} lần, lỗi ${aiFail} lần${aiSource?` · nguồn: ${esc(aiSource)}`:""}${aiLastErr?`<br>Lỗi gần nhất: ${esc(aiLastErr)}`:""}</p>`:""}`,
+    buttons:[{label:"🔍 Kiểm tra kết nối AI",cls:"sun",val:"diag"},{label:"💾 Tải file lưu",cls:"lav",val:"exp"},{label:"📂 Mở file lưu",cls:"white",val:"imp"},{label:muted?"🔊 Bật âm thanh":"🔇 Tắt âm thanh",cls:"white",val:"snd"},{label:"🔄 Chơi lại từ đầu",cls:"",val:"new"},{label:"Đóng",cls:"white",val:null}]});
+  if(v==="diag") await aiDiagnose();
   if(v==="exp") exportSave();
   if(v==="imp") $("#fileIn").click();
   if(v==="snd"){ muted=!muted; try{localStorage.setItem("kawaiiLife_mute",muted?"1":"0");}catch(e){} toast(muted?"Đã tắt âm thanh":"Đã bật âm thanh"); }
@@ -3084,6 +3117,7 @@ function babyScene(){
     }
     const enter=()=>{
       if(!d.baby || !d.baby.tasks){ d.baby={mode:null,tasks:sample(Object.keys(BABY_TASKS),CFG.babyTasks),done:{}}; save(); }
+      if(d.baby.tasks.length>CFG.babyTasks){ const keep=d.baby.tasks.filter(t=>d.baby.done[t]).slice(0,CFG.babyTasks); d.baby.tasks=keep.concat(sample(Object.keys(BABY_TASKS).filter(t=>!keep.includes(t)),CFG.babyTasks-keep.length)); save(); }
       if(!d.baby.mode) coinUI(); else paint();
     };
     if(!S.babyUnlocked) lockUI(); else enter();
@@ -3396,6 +3430,77 @@ function readBookScene(){
 }
 
 /* =========================================================
+   GIỚI THIỆU NHIỆM VỤ (bấm vào ô → xem cần làm gì, được gì, mất gì → Bắt đầu)
+   ========================================================= */
+function taskInfo(a){
+  const L=lv(), t=L.time+phoneSec(), mm=mealMin();
+  switch(a){
+    case "study": return {d:`Trả lời ${CFG.studyQ} câu hỏi các môn bé đã chọn, mỗi câu có ${t} giây.`, g:`Mỗi câu đúng +${studyReward()}$. Đúng cả ${CFG.studyQ}/${CFG.studyQ} câu được mở 1 Blind box.`, l:`Mỗi câu sai hoặc hết giờ −${CFG.wrong}$.`};
+    case "eat": return {d:`Vào bàn ăn, nhìn kỹ giá các món trong ${CFG.menuShowSec} giây rồi giá sẽ ẩn đi. Chọn món theo trí nhớ để no đủ ${mealTarget()}$ trong ${mm}–${mm+4} món. Mỗi lần ăn xong một món, các món đổi chỗ.`, g:`Hoàn thành +${CFG.mealReward}$, sau đó được thử vòng quay may mắn.`, l:`Vào bàn ${CFG.basicFee}$ và tiền các món ăn. Xem lại giá tốn 1$ (lần sau tăng thêm 1$). Ăn tới món thứ ${mm+4} mà chưa no thì −${CFG.mealFail}$ và độ no về 0.`};
+    case "bath": return {d:"Quay để chọn dầu gội và sữa tắm, rồi tắm cho thơm tho.", g:"Thơm tho sạch sẽ, hoàn thành việc trong ngày.", l:`Phí ${CFG.basicFee}$, cộng giá dầu gội và sữa tắm quay được (mỗi món 1–5$).`};
+    case "sleep": return {d:"Đi ngủ là việc làm sau cùng của một ngày. Ngủ xong là hết ngày và được mở túi mù huy hiệu.", g:"Kết thúc ngày, mở túi mù để tìm huy hiệu lên cấp.", l:`Phí ${CFG.basicFee}$.`};
+    case "chores": return {d:`Chạm vào hết 10 món đồ trong ${CFG.choresTime[S.levelIdx]||5} giây, có cả thú cưng và đồ chơi đang chạy lung tung.`, g:`Dọn hết +${CFG.choresAll}$. Dọn được từ một nửa trở lên +${CFG.choresHalf}$.`, l:"Dọn chưa được một nửa −1$."};
+    case "baby": return {d:`🌸 Nở hoa hay bế tắc 🥀? Tung đồng xu để biết hôm nay chăm em theo cách nào, rồi làm ${CFG.babyTasks} việc chăm em.${S.babyUnlocked?"":` Lần đầu cần nhận em bé (${CFG.babyUnlock}$).`}`,
+      g:`Mặt ngửa 🌞: mỗi việc +${CFG.babyAction}$. Thử thách nghe tiếng Anh: đúng nhận gấp đôi tiền gói.${S.levelIdx>=3?` Oẳn tù tì thắng +${CFG.rpsWin}$.`:""}`,
+      l:`Mặt sấp 🌙: mỗi việc −${CFG.babyAction}$. Gói nghe tốn 1–5$, sai thì mất gói.${S.levelIdx>=3?` Oẳn tù tì thua −${CFG.rpsLose}$.`:""}${S.levelIdx>=4?" Mua quà cho em 1–10$.":""}`};
+    case "cook": return {d:"Mẹ đưa tiền đi chợ. Bé chọn các món ở chợ sao cho tổng tiền đúng bằng số tiền mẹ đưa (game không cộng giúp).", g:`Mua đúng +${CFG.cookReward}$.`, l:`Mua sai tiền −${CFG.cookFail}$ và làm lại từ đầu.`};
+    case "sell": return {d:`Bán ${sellOrders()} đơn hàng, mỗi đơn có ${sellTime()} giây. Khách mua hàng và đưa tiền, bé chọn các tờ tiền để trả lại tiền thừa.`, g:"Mỗi đơn trả tiền thừa đúng +1$.", l:"Mỗi đơn trả sai hoặc hết giờ −1$."};
+    case "read": return {d:"Đọc một đoạn văn tiếng Anh, sau đó nghe 5 câu hỏi được đọc to và chọn đáp án đúng.", g:`Mỗi câu đúng +${CFG.right}$.`, l:`Mỗi câu sai −${CFG.wrong}$.`};
+    case "work": return {d:`Trả lời ${CFG.workQ} câu hỏi, mỗi câu ${t} giây. Mỗi ngày đi làm tối đa ${CFG.workMax} lượt.`, g:`Mỗi câu đúng +${workReward()}$.`, l:`Mỗi câu sai −${CFG.wrong}$.`};
+    case "tutor": return {d:`Đọc một bài “Vì sao?” và trả lời câu hỏi, sau đó học ${CFG.tutorQ} câu tiếng Anh. Còn ${tutorLeft()} khóa ở cấp này.`, g:`Trả lời đúng bài đọc +1$. Mỗi câu tiếng Anh đúng +${CFG.right}$.`, l:"Sai không bị trừ tiền."};
+  }
+  return null;
+}
+async function taskIntro(a){
+  const info=taskInfo(a); if(!info) return true;
+  const T=ACTS[a];
+  return await dialog({cls:"intro",title:`${T.emo} ${a==="work"&&S.day.done.work?"Làm thêm":T.name}`,
+    html:`<div class="introBox"><div class="iRow"><b>🎯 Cần làm</b><span>${info.d}</span></div><div class="iRow good"><b>🎁 Được</b><span>${info.g}</span></div><div class="iRow bad"><b>💸 Mất</b><span>${info.l}</span></div></div>`,
+    buttons:[{label:"▶ Bắt đầu",cls:"mint",val:true},{label:"Để sau",cls:"white",val:false}]});
+}
+
+/* =========================================================
+   KIỂM TRA KẾT NỐI AI (trong ⚙️ Cài đặt)
+   ========================================================= */
+async function aiDiagnose(){
+  const rows=[], lines=[];
+  const add=(h,cls="")=>{ rows.push(`<div class="dRow ${cls}">${h}</div>`); lines.push(h.replace(/<br>/g," ").replace(/<[^>]+>/g,"")); };
+  add(`📦 Phiên bản game: ${APP_VERSION}`);
+  add(`🌐 Trang đang chạy: ${location.protocol==="file:"?"file mở trực tiếp trên máy":esc(location.host)}`);
+  if(!/^https?:$/.test(location.protocol) || /(^|\.)claude\.ai$/.test(location.hostname)){
+    add("❌ Bản này không có server AI. Hãy mở game từ trang Netlify của bạn để dùng AI.","bad");
+  } else {
+    toast("🔍 Đang kiểm tra AI, chờ khoảng 10 giây…",9000);
+    let r=null, j=null;
+    try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),25000); r=await fetch("/api/questions?test=1",{cache:"no-store",signal:c.signal}); clearTimeout(tm); }
+    catch(e){ add(`❌ Không gọi được server AI (${esc(e.name==="AbortError"?"quá thời gian chờ":e.message)})`,"bad"); }
+    if(r){
+      const ct=r.headers.get("content-type")||"";
+      if(!r.ok) add(`❌ Server AI trả về mã lỗi <b>HTTP ${r.status}</b>. ${r.status===404?"Không tìm thấy server AI: Functions chưa được deploy (deploy bằng kéo-thả sẽ không có Functions, hãy deploy qua GitHub hoặc Netlify CLI).":r.status>=500?"Server AI bị lỗi hoặc chạy quá thời gian cho phép.":""}`,"bad");
+      else if(!ct.includes("json")) add("❌ Server trả về trang web thay vì dữ liệu: Functions chưa chạy (có thể deploy bằng kéo-thả).","bad");
+      else { try{ j=await r.json(); }catch(e){ add("❌ Không đọc được kết quả từ server.","bad"); } }
+    }
+    if(j){
+      add(`🖥️ Node trên server: ${esc(j.node)} · Kho lưu câu hỏi: ${j.blobs?"OK":"không dùng được"}`, j.blobs?"":"warn");
+      Object.keys(j.keys||{}).forEach(k=>{ if(!/chưa có/.test(j.keys[k])||/GEMINI|GROQ/.test(k)) add(`🔑 ${k}: ${esc(j.keys[k])}`); });
+      (j.results||[]).forEach(x=>{
+        add(`${x.ok?"✅":"❌"} <b>${esc(x.provider)}</b>${x.key?` · ${esc(x.key)}`:""}${x.model?` · model ${esc(x.model)}`:""}${x.status?` · <b>HTTP ${x.status}</b>`:""}${x.loi&&!(x.key||"").includes(x.loi)?` · ${esc(x.loi)}`:""}${x.error?`<br><small>${esc(x.error)}</small>`:""}${x.ok&&x.sample?`<br><small>Câu mẫu: ${esc(x.sample)}</small>`:""}`, x.ok?"good":"bad");
+        (x.attempts||[]).filter(a=>!a.ok).forEach(a=>add(`<small>↳ thử model ${esc(a.model)}: HTTP ${a.status||"—"} · ${esc(a.error||"")}</small>`,"sub"));
+      });
+    }
+  }
+  add(`🎮 Trong lượt chơi này: lấy được ${aiOk} lần, lỗi ${aiFail} lần${aiSource?` · nguồn: ${esc(aiSource)}`:""}${aiLastErr?`<br><small>Lỗi gần nhất: ${esc(aiLastErr)}</small>`:""}`);
+  const report=lines.join("\n"); try{ $("#toast").classList.remove("on"); }catch(e){}
+  const v=await dialog({title:"🔍 Kiểm tra kết nối AI",cls:"diag",html:`<div class="diagBox">${rows.join("")}</div><p class="sub">Bấm “Sao chép kết quả” rồi gửi cho người hỗ trợ (kết quả không chứa khóa API).</p>`,
+    buttons:[{label:"📋 Sao chép kết quả",cls:"lav",val:"copy"},{label:"Đóng",cls:"white",val:null}]});
+  if(v==="copy"){
+    let ok=false; try{ await navigator.clipboard.writeText(report); ok=true; }catch(e){}
+    if(!ok){ try{ const ta=document.createElement("textarea"); ta.value=report; document.body.appendChild(ta); ta.select(); ok=document.execCommand("copy"); ta.remove(); }catch(e){} }
+    toast(ok?"📋 Đã sao chép, dán vào tin nhắn để gửi nhé":"Không tự sao chép được, hãy chụp màn hình gửi nhé",3000);
+  }
+}
+
+/* =========================================================
    LƯU DỮ LIỆU NGƯỜI CHƠI RA THƯ MỤC + BẢNG XẾP HẠNG
    - Máy tính (Chrome / Edge): bé chọn thư mục chứa file game 1 lần,
      game tự đọc / ghi kawaii-players.txt và kawaii-<tên>.json trong thư mục đó.
@@ -3572,6 +3677,8 @@ function resume(){
   prefetchAI();
 }
 $("#btnRank").onclick=async()=>{ const b=$("#btnRank"); if(b.disabled) return; b.disabled=true; try{ await rankScene(); } finally{ b.disabled=false; } };
+try{ $("#verTxt").textContent="Phiên bản "+APP_VERSION; }catch(e){}
+try{ const bad=Object.keys(CFG).filter(k=>CFG[k]===undefined||Number.isNaN(CFG[k])); if(bad.length) console.error("CFG thiếu:",bad); }catch(e){}
 (async function boot(){
   await fsRestore();
   probeServer().then(()=>{ renderVoiceSel(); renderStoreRow(); });
