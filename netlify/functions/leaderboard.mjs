@@ -16,7 +16,7 @@ const fmt = iso => {
   try { return new Date(iso).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false }); }
   catch { return String(iso); }
 };
-const publicEntry = e => ({ name: e.name, file: e.file, createdAt: e.createdAt, ip: e.ip, gender: e.gender,
+const publicEntry = e => ({ name: e.name, file: e.file, createdAt: e.createdAt, ip: e.ip, gender: e.gender, from: e.from || "",
   babyName: e.babyName, buddy: e.buddy, record: e.record });
 function cleanRecord(r, fallbackAt) {
   const level = Math.max(0, Math.min(6, parseInt(r?.level, 10) || 0));
@@ -55,7 +55,7 @@ export default async (req, context) => {
     data.players[file] = {
       name, file, createdAt: now, ip: context.ip || req.headers.get("x-nf-client-connection-ip") || "không xác định",
       gender: body.gender === "m" ? "m" : body.gender === "f" ? "f" : null,
-      babyName: clean(body.babyName, 12), buddy: BUDDIES.includes(body.buddy) ? body.buddy : "bunny",
+      from: clean(body.from, 30), babyName: clean(body.babyName, 12), buddy: BUDDIES.includes(body.buddy) ? body.buddy : "bunny",
       record: cleanRecord(body.record, now), token
     };
     await store.setJSON(KEY, data);
@@ -69,6 +69,7 @@ export default async (req, context) => {
   if (body.action === "update") {
     if (body.gender === "m" || body.gender === "f") e.gender = body.gender;
     if (body.babyName != null) e.babyName = clean(body.babyName, 12);
+    if (body.from != null) e.from = clean(body.from, 30);
     if (BUDDIES.includes(body.buddy)) e.buddy = body.buddy;
     if (body.record) e.record = cleanRecord(body.record, e.record.at);
     await store.setJSON(KEY, data);
