@@ -599,6 +599,40 @@ input{font:inherit;color:inherit}
 .dRow.good{background:var(--mintL)}.dRow.bad{background:#ffe3e8}.dRow.warn{background:var(--sunL)}
 .dRow.sub{background:transparent;padding:0 10px 0 24px;color:var(--soft)}
 
+.rkName{border:none;background:none;padding:0;font:inherit;color:var(--pinkD);text-decoration:underline dotted;cursor:pointer;text-align:left}
+.rkCard{width:min(460px,92vw)}
+.rename{width:min(460px,92vw)}
+
+.rkBtns{margin-left:auto;display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.rkClearBtn{padding:2px 12px!important;font-size:13px!important;color:var(--redD)!important}
+.rkAdm{border:none;background:#ffe3e8;color:var(--redD);border-radius:999px;font-weight:800;font-size:12px;padding:2px 8px;white-space:nowrap}
+.vehCard{width:min(560px,94vw)}
+.vehShow{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:min(46vh,260px)}
+.vehChar{height:100%}.vehChar svg{height:100%}
+.vehItem{height:62%;display:flex;align-items:flex-end}.vehItem svg{height:100%;width:auto}
+.vehShow.ph .vehItem{height:30%;align-self:center;margin-left:-18px;margin-top:6%}
+
+#toast{pointer-events:none}
+.confetti{pointer-events:none}
+
+/* v10 */
+.stepPop{bottom:50%;transform:translate(-50%,50%);padding:14px 18px;border-width:4px;flex-direction:column;gap:10px;min-width:min(420px,90vw)}
+.spCap{font-weight:800;font-size:clamp(16px,4.2vh,22px);text-align:center}
+.spRow{display:flex;gap:12px;align-items:center;justify-content:center}
+.stepPop .btn{padding:6px 20px;font-size:clamp(20px,5vh,28px)}
+.stepPop .bill{font-size:clamp(24px,6vh,32px)!important}
+.spN{font-size:clamp(28px,7vh,40px)!important;min-width:2em}
+.dish .p{font-size:clamp(20px,4.6vh,26px)!important;padding:0 8px}
+.sItem .p{font-size:clamp(18px,4.4vh,24px)!important;display:block}
+.mk .p{font-size:clamp(20px,4.6vh,26px)!important}
+.bill{font-size:clamp(22px,5.4vh,30px)!important;padding:4px 12px!important}
+.paid .bill{font-size:clamp(20px,5vh,26px)!important}
+.stVoice{text-align:left;background:var(--lavL);border-radius:14px;padding:6px 10px;margin:6px 0}
+.stVoice .voiceRow{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:4px}
+.stVoice .voiceRow label{flex:1;min-width:140px;font-weight:700;font-size:13px;display:flex;flex-direction:column}
+.stVoice select{border:3px solid var(--pinkL);border-radius:12px;padding:4px 6px;font:inherit;font-size:15px;background:#fff;color:var(--ink);width:100%}
+.menu .stVoice .btn{width:auto;margin-top:0;padding:4px 14px;font-size:14px}
+
 </style>
 </head>
 <body>
@@ -652,10 +686,10 @@ input{font:inherit;color:inherit}
             <div class="chipsel" id="subSel">
               <button data-s="math" class="on">🔢 Toán</button>
               <button data-s="en" class="on">🔤 Tiếng Anh</button>
-              <button data-s="vn">📖 Tiếng Việt</button>
-              <button data-s="riddle">🤔 Đố mẹo</button>
-              <button data-s="eye">👁️ Tập mắt</button>
-              <button data-s="social">🤝 Giao tiếp</button>
+              <button data-s="vn" class="on">📖 Tiếng Việt</button>
+              <button data-s="riddle" class="on">🤔 Đố mẹo</button>
+              <button data-s="eye" class="on">👁️ Tập mắt</button>
+              <button data-s="social" class="on">🤝 Giao tiếp</button>
               <button data-s="camb">🎓 Luyện thi Cambridge</button>
             </div>
             <label class="tog" id="cambRow" style="display:none">🎓 Cấp luyện thi Cambridge: <select id="inCamb"><option value="starters">Pre A1 Starters</option><option value="movers" selected>A1 Movers</option><option value="flyers">A2 Flyers</option><option value="ket">A2 Key (KET)</option><option value="pet">B1 Preliminary (PET)</option></select></label>
@@ -730,7 +764,8 @@ const CFG = {
   babyUnlock:5, babyAction:1,
   choresAll:4, choresHalf:2,
   choresTime:[20,20,16,12,8,5],   // giây dọn nhà theo cấp: Mẫu giáo → Tốt nghiệp
-  tutorMax:2, tutorBelow:2, tutorQ:10,
+  tutorMax:2, tutorBelow:2, tutorQ:10, tutorReward:1,   // phụ đạo: Mầm non 1 khóa, Tiểu học 2, mỗi cấp sau +1
+  renamePrice:30,
   workMax:10,        // số lượt đi làm tối đa mỗi ngày
   wheelCost:2,
   menuShowSec:5, listenPlays:2, rpsWin:2, rpsLose:1, cookReward:5, cookFail:2, babyTasks:3,
@@ -739,19 +774,21 @@ const CFG = {
 /* cửa hàng: lv = cấp học mở bán (2 = THCS, 4 = Đại học, 5 = Đi làm) */
 const SHOP=[
   {id:"bike",name:"Xe đạp",emo:"🚲",price:20,lv:2,perk:"Đi học: mỗi câu đúng +1$"},
+  {id:"laptop",name:"Laptop",emo:"💻",price:50,lv:3,perk:"Học phụ đạo: điểm thưởng ×2"},
   {id:"moto",name:"Xe máy",emo:"🛵",price:60,lv:4,perk:"Đi học, đi làm: mỗi câu đúng +1$"},
   {id:"vf3",name:"Ô tô VinFast VF 3",emo:"🚗",price:250,lv:5,perk:"Đi làm: mỗi câu đúng +2$"},
   {id:"ip16",name:"iPhone 16",emo:"📱",price:60,lv:5,perk:"+3 giây mỗi câu hỏi",sec:3},
   {id:"ip17",name:"iPhone 17",emo:"📱",price:80,lv:5,perk:"+4 giây mỗi câu hỏi",sec:4},
   {id:"ip18",name:"iPhone 18",emo:"📱",price:100,lv:5,perk:"+5 giây mỗi câu hỏi",sec:5}
 ];
-const APP_VERSION="11/10/2026 (bản 6)";
+const APP_VERSION="13/10/2026 (bản 9)";
+const APP_RELEASED="13/10/2026";
 const BASE_ACTS=["study","eat","bath","sleep"], MID_ACTS=[...BASE_ACTS,"chores","baby"];
 const LEVELS = [
   {name:"Mẫu giáo", emo:"🧸", time:60, acts:BASE_ACTS},
   {name:"Tiểu học", emo:"🎒", time:40, acts:MID_ACTS},
   {name:"Trung học cơ sở", emo:"📘", time:30, acts:[...MID_ACTS,"cook","sell"]},
-  {name:"Trung học phổ thông", emo:"📐", time:20, acts:[...MID_ACTS,"cook","sell"]},
+  {name:"Trung học phổ thông", emo:"📐", time:20, acts:[...MID_ACTS,"cook","sell","read"]},
   {name:"Đại học", emo:"🎓", time:15, acts:[...MID_ACTS,"cook","sell","read","work"]},
   {name:"Tốt nghiệp đi làm", emo:"💼", time:10, acts:[...MID_ACTS,"cook","sell","read","work"]}
 ];
@@ -1871,13 +1908,44 @@ function pickVoice(lang){
   const vs=allVoices();
   if(pref && pref!=="auto" && !pref.startsWith("fpt:")){ const v=vs.find(v=>v.voiceURI===pref); if(v) return v; }
   if(lang==="vi") return vs.filter(v=>/^vi/i.test(v.lang)).sort((a,b)=>viScore(b)-viScore(a))[0]||null;
-  return vs.find(v=>/^en[-_]US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+  return enVoice();
+}
+/* ưu tiên giọng có sẵn trong máy (giọng qua mạng như "Google US English" hay bị chậm vài giây) */
+function enVoice(){
+  const vs=allVoices(), pref=VOICE.en;
+  if(pref && pref!=="auto" && pref!=="off"){ const v=vs.find(x=>x.voiceURI===pref); if(v) return v; }
+  return vs.find(v=>/^en[-_]US/i.test(v.lang)&&v.localService) || vs.find(v=>/^en/i.test(v.lang)&&v.localService)
+      || vs.find(v=>/^en[-_]US/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null;
+}
+/* đọc 1 câu tiếng Anh và chờ đọc xong (dùng cho bài nghe) */
+function speakWait(text,rate=.85){
+  return new Promise(res=>{
+    if(!ttsOk){ res(false); return; }
+    let fin=false; const end=()=>{ if(fin) return; fin=true; clearTimeout(t); res(true); };
+    const t=setTimeout(end, 4000+String(text).length*110);
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=rate;
+      const vv=enVoice(); if(vv){ u.voice=vv; u.lang=vv.lang; }
+      u.onend=end; u.onerror=end;
+      setTimeout(()=>{ try{ speechSynthesis.speak(u); if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){ end(); } },60);
+    }catch(e){ end(); }
+  });
 }
 function onlineVoice(){ if(!SRV.tts) return null; const p=VOICE.vi; if(p&&p.startsWith("fpt:")) return p.slice(4); return p==="auto" ? "banmai" : null; }
 function renderVoiceSel(){
   renderVoiceSwitch();
   const vs=allVoices();
-  const mk=(id,lang)=>{
+  const mk=fillVoiceSelect;
+  mk("inVoiceVi","vi"); mk("inVoiceEn","en"); mk("stVoiceVi","vi"); mk("stVoiceEn","en");
+  const note=$("#voiceNote"); if(!note) return;
+  const hasVi=vs.some(v=>/^vi/i.test(v.lang));
+  note.textContent = SRV.tts ? "Có giọng tiếng Việt online FPT.AI, đọc rõ và tự nhiên nhất." :
+    !ttsOk ? "Máy này chưa hỗ trợ giọng đọc." : !vs.length ? "Đang tải danh sách giọng đọc…" :
+    !hasVi ? "Máy chưa có giọng tiếng Việt nên game sẽ không đọc câu tiếng Việt. Thử trình duyệt Edge hoặc cài giọng tiếng Việt cho máy." : "";
+}
+function fillVoiceSelect(id,lang){
+    const vs=allVoices();
     const sel=$("#"+id); if(!sel) return;
     const list=vs.filter(v=>lang==="vi"?/^vi/i.test(v.lang):/^en/i.test(v.lang));
     if(lang==="vi") list.sort((a,b)=>viScore(b)-viScore(a));
@@ -1885,14 +1953,7 @@ function renderVoiceSel(){
     sel.innerHTML=`<option value="off">🔇 Tắt đọc</option><option value="auto">Tự động</option>`+online+list.map(v=>`<option value="${esc(v.voiceURI)}">${esc(v.name)} (${esc(v.lang)})</option>`).join("");
     sel.value=[...sel.options].some(o=>o.value===VOICE[lang]) ? VOICE[lang] : "auto";
     sel.disabled = !ttsOk && !(lang==="vi"&&SRV.tts);
-    sel.onchange=()=>{ VOICE[lang]=sel.value; saveVoice(); };
-  };
-  mk("inVoiceVi","vi"); mk("inVoiceEn","en");
-  const note=$("#voiceNote"); if(!note) return;
-  const hasVi=vs.some(v=>/^vi/i.test(v.lang));
-  note.textContent = SRV.tts ? "Có giọng tiếng Việt online FPT.AI, đọc rõ và tự nhiên nhất." :
-    !ttsOk ? "Máy này chưa hỗ trợ giọng đọc." : !vs.length ? "Đang tải danh sách giọng đọc…" :
-    !hasVi ? "Máy chưa có giọng tiếng Việt nên game sẽ không đọc câu tiếng Việt. Thử trình duyệt Edge hoặc cài giọng tiếng Việt cho máy." : "";
+    sel.onchange=()=>{ VOICE[lang]=sel.value; saveVoice(); renderVoiceSel(); };
 }
 if(ttsOk){ try{ speechSynthesis.addEventListener("voiceschanged",renderVoiceSel); }catch(e){ try{ speechSynthesis.onvoiceschanged=renderVoiceSel; }catch(e2){} } }
 function cleanSpeech(s){ return xh(String(s)).replace(/\p{Extended_Pictographic}|\uFE0F|\u200D/gu,"").replace(/_{2,}/g," ... ").replace(/[“”"]/g,"").replace(/\s+/g," ").trim(); }
@@ -1959,7 +2020,7 @@ function normalize(o){
 function loadSave(){ try{ const t=localStorage.getItem(SAVE_KEY); if(!t) return null; const o=JSON.parse(t); return validSave(o)?normalize(o):null; }catch(e){ return null; } }
 function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
 function newState(name,age,cycles,subjects,ai,buddy,babyName){
-  return normalize({v:2,name,age,cycles,subjects,ai,buddy:buddy||"bunny",babyName:babyName||"",usedQ:[],owned:{},giftPending:false,money:CFG.start,gender:null,
+  return normalize({v:2,appVersion:APP_VERSION,name,age,cycles,subjects,ai,buddy:buddy||"bunny",babyName:babyName||"",usedQ:[],owned:{},giftPending:false,money:CFG.start,gender:null,
     look:{face:null,hair:null,eyes:null,lips:null,outfit:null,shoes:null},
     baseGrade:clamp(age-5,0,12), startLevel: age<=5?0:1, levelIdx: age<=5?0:1,
     phase:"create", cstep:0, st:null, editCat:"face", ed:null,
@@ -1999,8 +2060,10 @@ function stuck(){
   const r=remainingActs(); if(!r.length) return false;
   return r.every(a => !EARN_ACTS.includes(a) && !canPay(minCost(a)));
 }
-const tutorLeft = () => CFG.tutorMax - S.tutorUsed;
-const tutorAvail = () => tutorLeft()>0 && (S.money<CFG.tutorBelow || stuck());
+const tutorMaxL = () => S.levelIdx+1;   // Mầm non 1, Tiểu học 2, THCS 3, THPT 4, Đại học 5, Tốt nghiệp 6
+const tutorLeft = () => tutorMaxL() - S.tutorUsed;
+const tutorAvail = () => tutorLeft()>0;
+const tutorRew = () => CFG.tutorReward*(S.owned&&S.owned.laptop?2:1);
 
 /* =========================================================
    GIAO DIỆN CHUNG
@@ -2128,7 +2191,13 @@ function askQuestion(o){
       speakParts(parts,readLang).then(()=>{ const r=$("#qRead"); if(r) r.hidden=true; if(!done){ runStart=performance.now(); paused=false; } });
       $("#qSkip").onclick=()=>{ if(readCancel) readCancel(); };
     }
-    if(q.speak){ setTimeout(()=>{ if(!done) speak(q.speak,q.rate); },350); $("#qSpeak").onclick=()=>speak(q.speak,q.rate); }
+    if(q.speak){   // bài nghe: đồng hồ chỉ chạy khi máy đọc xong câu
+      paused=true; const rb=$("#qRead"); rb.hidden=false; rb.querySelector("span").textContent="🔊 Đang đọc… Đồng hồ sẽ chạy khi đọc xong.";
+      const startClock=()=>{ const r=$("#qRead"); if(r) r.hidden=true; if(!done && paused){ runStart=performance.now(); paused=false; } };
+      setTimeout(()=>{ if(!done) speakWait(q.speak,q.rate).then(startClock); },200);
+      $("#qSkip").onclick=()=>{ try{ speechSynthesis.cancel(); }catch(e){} startClock(); };
+      $("#qSpeak").onclick=()=>speak(q.speak,q.rate);
+    }
     qTimer=setInterval(()=>{
       if(paused) return;
       const left=Math.max(0,total-elapsed()); const sec=Math.ceil(left/1000);
@@ -2158,12 +2227,11 @@ function feedback(ok,delta,q,timeout,o={}){
   });
 }
 async function unlockFlow(title){
-  let need=1, streak=0;
-  while(true){
+  while(true){   // chỉ cần đúng 1 câu; sai thì hiện tiếp 1 câu khác
     const ok = await askQuestion({subject:pick(S.subjects), d:qDiff(), time:CFG.unlockTime, reward:CFG.unlockRight, penalty:CFG.unlockWrong,
-      title, prog:`Mở khóa: đúng ${streak}/${need} câu liên tiếp`});
-    if(ok){ streak++; if(streak>=need){ closeQuiz(); return true; } }
-    else { need++; streak=0; toast(`Bây giờ cần trả lời đúng ${need} câu liên tiếp để mở khóa`); }
+      title, prog:"Trả lời đúng 1 câu để mở khóa"});
+    if(ok){ closeQuiz(); return true; }
+    toast("Chưa đúng rồi, thử câu khác nhé!");
   }
 }
 async function quizSession({n,title,reward,penalty,d,time,subjects}){
@@ -2328,7 +2396,7 @@ function renderTrans(){
       <div class="row" style="align-items:flex-start"><b>🏅</b><div><span>Sưu tập đủ ${bset.length} huy hiệu ${LV_TAG[S.levelIdx]} để lên cấp. Mỗi ngày xong việc được mở 1 trong ${S.levelIdx>=3?3:2} túi mù.</span><div class="badgeRow">${bset.map(id=>badgeHTML(id,S.levelIdx,hasBadge(id,S.levelIdx),false)).join("")}</div></div></div>
       <div class="row" style="align-items:flex-start"><b>🗓️</b><div class="acts-mini">${acts}</div></div>
       <div class="row"><b>🍱</b><span>Ăn cho no ${mealTarget()}$ trong ${mealMin()}–${mealMin()+4} món (xong +${CFG.mealReward}$). Ăn, tắm, ngủ mỗi lần ${CFG.basicFee}$</span></div>
-      <div class="row"><b>📝</b><span>Còn dưới ${CFG.tutorBelow}$ thì được học phụ đạo, tối đa ${CFG.tutorMax} khóa</span></div>
+      <div class="row"><b>📝</b><span>Còn dưới ${CFG.tutorBelow}$ thì được học phụ đạo, tối đa ${tutorMaxL()} khóa</span></div>
     </div>`;
   let edit="";
   if(!intro){
@@ -2398,8 +2466,7 @@ function renderHub(){
     const T=ACTS[a];
     if(a==="tutor"){
       const av=tutorAvail();
-      const tip = tutorLeft()<=0 ? "Đã học hết 2 khóa" : av ? `Còn ${tutorLeft()} khóa, đúng +${CFG.right}$` : `Mở khi còn dưới ${CFG.tutorBelow}$`;
-      return `<button class="tile k-earn ${av?"glow":"lock"}" data-a="tutor" ${av?"":"disabled"}><span class="em">${T.emo}</span><span class="tn">${T.name}</span>${av?"":`<span class="tp">🔒 ${tutorLeft()<=0?"Đã học hết":"Mở khi còn dưới "+CFG.tutorBelow+"$"}</span>`}</button>`;
+      return `<button class="tile k-earn ${av?"":"lock"}" data-a="tutor" ${av?"":"disabled"}><span class="em">${T.emo}</span><span class="tn">${T.name}</span>${av?"":`<span class="tp">Đã học hết ${tutorMaxL()} khóa</span>`}</button>`;
     }
     if(a==="shop"){
       const open=S.levelIdx>=2, cnt=SHOP.filter(x=>S.owned[x.id]).length;
@@ -2409,7 +2476,7 @@ function renderHub(){
       const wc=d.workCount||0, more=wc<CFG.workMax;
       return `<button class="tile k-earn ${more?"extra":"done"}" data-a="work" ${more?"":"disabled"}><span class="em">${T.emo}</span><span class="tn">${more?"Làm thêm":T.name}</span><span class="tp">${wc}/${CFG.workMax} lượt</span></button>`;
     }
-    if(!L.acts.includes(a)){ const need=a==="work"||a==="read"?"Mở ở Đại học":a==="cook"||a==="sell"?"Mở ở THCS":"Mở ở Tiểu học"; return `<button class="tile lock" disabled><span class="em">${T.emo}</span><span class="tn">${T.name}</span><span class="tp">🔒 ${need}</span></button>`; }
+    if(!L.acts.includes(a)){ const need=a==="work"?"Mở ở Đại học":a==="read"?"Mở ở THPT":a==="cook"||a==="sell"?"Mở ở THCS":"Mở ở Tiểu học"; return `<button class="tile lock" disabled><span class="em">${T.emo}</span><span class="tn">${T.name}</span><span class="tp">🔒 ${need}</span></button>`; }
     return `<button class="tile ${a==="baby"?"k-mix":"k-"+T.kind} ${d.done[a]?"done":""}" data-a="${a}" ${d.done[a]?"disabled":""}><span class="em">${T.emo}</span><span class="tn">${T.name}</span>${a==="baby"?`<span class="tp">Nở hoa hay bế tắc?</span>`:""}</button>`;
   }).join("");
   el.innerHTML=`<div class="hubHead"><span class="day">${L.emo} ${L.name}: ngày ${(S.dayCount||0)+1}</span><span class="badgeRow mini" title="Huy hiệu cần để lên cấp">${dots}</span>
@@ -2422,7 +2489,7 @@ function renderHub(){
   show("scr-hub");
   if(stuck()){
     if(tutorAvail()) toast("Bé không đủ tiền làm tiếp. Hãy bấm Học phụ đạo để kiếm thêm nhé!",3500);
-    else later(()=>gameOver(`Bé đã học hết ${CFG.tutorMax} khóa phụ đạo mà vẫn không đủ tiền để hoàn thành ngày.`),600);
+    else later(()=>gameOver(`Bé đã học hết ${tutorMaxL()} khóa phụ đạo mà vẫn không đủ tiền để hoàn thành ngày.`),600);
   }
 }
 async function doAct(a){
@@ -2615,10 +2682,10 @@ async function runTutor(){
   if(tutorLeft()<=0) return;
   S.tutorUsed++; save(); const k=S.tutorUsed;
   await readingScene();
-  const right=await quizSession({n:CFG.tutorQ, title:`📝 Phụ đạo tiếng Anh (khóa ${k}/${CFG.tutorMax})`, reward:CFG.right, penalty:0, d:qDiff(), time:lv().time, subjects:["en"]});
-  await dialog({mascot:"kitty",mood:right>=CFG.tutorQ/2?"happy":"sad",title:`Phụ đạo: đúng ${right}/${CFG.tutorQ} câu`,html:`<p>Bé nhận thêm <b>${right*CFG.right}$</b>, hiện có <b>${S.money}$</b>.</p>`,buttons:[{label:"Tiếp tục",cls:"mint",val:1}]});
-  if(S.tutorUsed>=CFG.tutorMax && (S.money<CFG.tutorBelow || (S.phase==="hub" && stuck()))){
-    gameOver(`Bé đã học đủ ${CFG.tutorMax} khóa phụ đạo mà vẫn thiếu tiền.`); return;
+  const right=await quizSession({n:CFG.tutorQ, title:`📝 Phụ đạo tiếng Anh (khóa ${k}/${tutorMaxL()})`, reward:tutorRew(), penalty:0, d:qDiff(), time:lv().time, subjects:["en"]});
+  await dialog({mascot:"kitty",mood:right>=CFG.tutorQ/2?"happy":"sad",title:`Phụ đạo: đúng ${right}/${CFG.tutorQ} câu`,html:`<p>Bé nhận thêm <b>${right*tutorRew()}$</b>, hiện có <b>${S.money}$</b>.</p>`,buttons:[{label:"Tiếp tục",cls:"mint",val:1}]});
+  if(S.tutorUsed>=tutorMaxL() && (S.money<CFG.tutorBelow || (S.phase==="hub" && stuck()))){
+    gameOver(`Bé đã học đủ ${tutorMaxL()} khóa phụ đạo mà vẫn thiếu tiền.`); return;
   }
   refresh();
 }
@@ -2628,7 +2695,7 @@ async function outOfMoney(){
     sBad();
     await dialog({mascot:"bear",mood:"sad",title:"Hết tiền mất rồi!",html:`<p>Bé có thể đi học phụ đạo để kiếm thêm tiền (còn ${tutorLeft()} khóa). Trong giờ phụ đạo, trả lời sai không bị trừ tiền.</p>`,buttons:[{label:"Đi học phụ đạo",cls:"mint",val:1}]});
     busy=true; try{ await runTutor(); } finally{ busy=false; }
-  } else gameOver(S.phase==="create"?"Bé hết tiền khi đang tạo nhân vật.":`Bé hết tiền và đã dùng hết ${CFG.tutorMax} khóa phụ đạo.`);
+  } else gameOver(S.phase==="create"?"Bé hết tiền khi đang tạo nhân vật.":`Bé hết tiền và đã dùng hết ${tutorMaxL()} khóa phụ đạo.`);
 }
 function refresh(){ if(!S) return; if(S.phase==="hub") renderHub(); else if(S.phase==="trans") renderTrans(); else if(S.phase==="create") renderCreate(); }
 
@@ -2647,6 +2714,7 @@ async function nextDay(){
   S.dayCount=(S.dayCount||0)+1; S.day={done:{}}; save();
   confetti(20);
   await badgeBags();
+  dailyRecord();
   if(!missingBadges().length){ await levelUp(); return; }
   renderHub();
 }
@@ -2656,7 +2724,7 @@ async function levelUp(){
   recordProgress(S.levelIdx);
   confetti(60); tone([[523,.12],[659,.12],[784,.12],[1047,.12],[1319,.35]]);
   const L=lv();
-  await dialog({title:`Lên ${L.name} rồi! ${L.emo}`,html:`<div class="reveal">${charSVG({mood:"happy"})}</div><p>Từ cấp này mỗi câu hỏi chỉ còn <b>${L.time} giây</b>, ăn cho no cần <b>${mealTarget()}$</b>.${S.levelIdx===1?" Có thêm Việc nhà và Trông em bé!":""}${L.acts.includes("work")&&!LEVELS[S.levelIdx-1].acts.includes("work")?" Có thêm hoạt động Đi làm, mỗi ngày làm tối đa "+CFG.workMax+" lượt!":""}${SHOP.some(x=>x.lv===S.levelIdx)?" Cửa hàng mở bán: "+SHOP.filter(x=>x.lv===S.levelIdx).map(x=>x.emo+" "+x.name).join(", ")+".":""}</p>${S.levelIdx===2?"<p>🏪 Có thêm nhiệm vụ Bán hàng giúp mẹ!</p>":""}${S.levelIdx===4?"<p>📖 Có thêm nhiệm vụ Đọc sách, và bé sẽ chọn nghề nghiệp mơ ước!</p>":""}<p>🎁 Bé còn được một lượt quay quà đổi ngoại hình miễn phí!</p>`,buttons:[{label:"Mở quà",cls:"sun",val:1}]});
+  await dialog({title:`Lên ${L.name} rồi! ${L.emo}`,html:`<div class="reveal">${charSVG({mood:"happy"})}</div><p>Từ cấp này mỗi câu hỏi chỉ còn <b>${L.time} giây</b>, ăn cho no cần <b>${mealTarget()}$</b>.${S.levelIdx===1?" Có thêm Việc nhà và Trông em bé!":""}${L.acts.includes("work")&&!LEVELS[S.levelIdx-1].acts.includes("work")?" Có thêm hoạt động Đi làm, mỗi ngày làm tối đa "+CFG.workMax+" lượt!":""}${SHOP.some(x=>x.lv===S.levelIdx)?" Cửa hàng mở bán: "+SHOP.filter(x=>x.lv===S.levelIdx).map(x=>x.emo+" "+x.name).join(", ")+".":""}</p>${S.levelIdx===2?"<p>🏪 Có thêm nhiệm vụ Bán hàng giúp mẹ!</p>":""}${S.levelIdx===3?"<p>📖 Có thêm nhiệm vụ Đọc sách!</p>":""}${S.levelIdx===4?"<p>🎓 Bé sẽ chọn nghề nghiệp mơ ước!</p>":""}<p>🎁 Bé còn được một lượt quay quà đổi ngoại hình miễn phí!</p>`,buttons:[{label:"Mở quà",cls:"sun",val:1}]});
   renderTrans(); await giftScene();
 }
 
@@ -2702,11 +2770,22 @@ $("#fileIn").onchange=e=>{
 $("#btnImport").onclick=()=>$("#fileIn").click();
 $("#btnMenu").onclick=async()=>{
   if(busy){ toast("Bé làm xong việc đang làm rồi mở cài đặt nhé"); return; }
-  const v=await dialog({mascot:null,title:"⚙️ Cài đặt",cls:"menu",
-    html:`<p style="font-size:12px">📦 Phiên bản: <b>${APP_VERSION}</b></p><p>Game tự lưu trên máy sau mỗi bước. Bé có thể tải file lưu để giữ lại hoặc chép sang máy khác.</p>
+  const vp=dialog({mascot:null,title:"⚙️ Cài đặt",cls:"menu",
+    html:`<p style="font-size:12px">📦 Phiên bản: <b>${APP_VERSION}</b></p>
+      <div class="stVoice"><div class="switchRow"><span class="lbl">🔊 Đọc câu hỏi và đáp án</span><button type="button" class="switch ${VOICE.on?"on":""}" id="stVoiceOn" role="switch" aria-label="Bật tắt đọc câu hỏi"><i></i></button><span class="swTxt" id="stVoiceTxt">${VOICE.on?"Bật":"Tắt"}</span></div>
+        <div class="voiceRow" id="stVoiceBox" style="display:${VOICE.on?"flex":"none"}"><label>Giọng tiếng Việt<select id="stVoiceVi"></select></label><label>Giọng tiếng Anh<select id="stVoiceEn"></select></label><button type="button" class="btn white" id="stVoiceTest">▶ Nghe thử</button></div></div><p>Game tự lưu trên máy sau mỗi bước. Bé có thể tải file lưu để giữ lại hoặc chép sang máy khác.</p>
       <p style="font-size:13px;text-align:left">🤖 Server AI: ${SRV.ai?"✅ đã kết nối":`❌ chưa kết nối${SRV.aiHttp?` (HTTP ${SRV.aiHttp})`:""}`}${S&&!S.ai?" · lượt chơi này đang tắt câu hỏi AI":""}</p>
       ${S&&S.ai?`<p style="font-size:13px;text-align:left">🤖 AI: ${SRV.ai?"đã kết nối server":"chưa kết nối được server AI"} · lấy được ${aiOk} lần, lỗi ${aiFail} lần${aiSource?` · nguồn: ${esc(aiSource)}`:""}${aiLastErr?`<br>Lỗi gần nhất: ${esc(aiLastErr)}`:""}</p>`:""}`,
     buttons:[{label:"🔍 Kiểm tra kết nối AI",cls:"sun",val:"diag"},{label:"💾 Tải file lưu",cls:"lav",val:"exp"},{label:"📂 Mở file lưu",cls:"white",val:"imp"},{label:muted?"🔊 Bật âm thanh":"🔇 Tắt âm thanh",cls:"white",val:"snd"},{label:"🔄 Chơi lại từ đầu",cls:"",val:"new"},{label:"Đóng",cls:"white",val:null}]});
+  fillVoiceSelect("stVoiceVi","vi"); fillVoiceSelect("stVoiceEn","en");
+  $("#stVoiceOn").onclick=()=>{
+    VOICE.on=!VOICE.on; if(VOICE.on && VOICE.vi==="off" && VOICE.en==="off"){ VOICE.vi="auto"; VOICE.en="auto"; }
+    saveVoice(); $("#stVoiceOn").classList.toggle("on",VOICE.on); $("#stVoiceTxt").textContent=VOICE.on?"Bật":"Tắt";
+    $("#stVoiceBox").style.display=VOICE.on?"flex":"none"; fillVoiceSelect("stVoiceVi","vi"); fillVoiceSelect("stVoiceEn","en"); renderVoiceSel();
+    if(VOICE.on) unlockAudio(); tone([[VOICE.on?880:520,.08]]); toast(VOICE.on?"🔊 Đã bật đọc câu hỏi, áp dụng ngay từ câu tiếp theo":"🔇 Đã tắt đọc câu hỏi");
+  };
+  $("#stVoiceTest").onclick=async()=>{ unlockAudio(); await speakParts(["Xin chào! Mình sẽ đọc câu hỏi cho bé nghe nhé."],"vi"); await speakParts(["Hello! Let's learn English together."],"en"); };
+  const v=await vp;
   if(v==="diag") await aiDiagnose();
   if(v==="exp") exportSave();
   if(v==="imp") $("#fileIn").click();
@@ -2855,13 +2934,18 @@ function shopScene(){
       openScene("shop",`<div class="qHead"><span class="qTag riddle">🛒 Cửa hàng</span><span class="qTitle">Màu sắc sẽ được quay ngẫu nhiên khi mua!</span><button class="btn white" id="shClose" style="margin-left:auto">Đóng</button></div>
         ${S.vouchers?`<label class="tog vtog"><input type="checkbox" id="useV" ${useV?"checked":""}> 🎟️ Dùng voucher giảm 10$ (còn ${S.vouchers})</label>`:""}
         <div class="shopGrid">${(()=>{ const lim=boxLimit(), used=boxUsed(), miss=missingBadges().length, open=lim>0, pr=priceFor({price:boxPrice()});
-          return `<div class="shopItem cardBox ${open?"":"lock"}"><span class="em">🎴</span><b>Hộp thẻ huy hiệu</b><span class="perk">Mở thêm 1 lượt túi mù huy hiệu ${LV_TAG[S.levelIdx]} (đã mua ${used}/${lim} lần ở cấp này)</span>
+          return `<div class="shopItem cardBox"><span class="em">🏷️</span><b>Thẻ đổi tên</b><span class="perk">Đổi tên nhân vật, tên mới cập nhật cả trên bảng xếp hạng</span><button class="btn sun" id="buyRename">Mua ${CFG.renamePrice}$</button></div>`
+            + `<div class="shopItem cardBox ${open?"":"lock"}"><span class="em">🎴</span><b>Hộp thẻ huy hiệu</b><span class="perk">Mở thêm 1 lượt túi mù huy hiệu ${LV_TAG[S.levelIdx]} (đã mua ${used}/${lim} lần ở cấp này)</span>
             ${!open?`<span class="tp">🔒 Mở ở ${LEVELS[CFG.boxFrom].name}</span>`: !miss?`<span class="tp ok">✓ Đã đủ huy hiệu</span>`: used>=lim?`<span class="tp">Hết lượt mua ở cấp này</span>`:`<button class="btn sun" id="buyBox">Mua ${pr}$${useV?` <s>${boxPrice()}$</s>`:""}</button>`}</div>`; })()}${SHOP.map(it=>{ const own=S.owned[it.id], open=S.levelIdx>=it.lv;
           return `<div class="shopItem ${own?"own":""} ${open?"":"lock"}"><span class="em">${it.emo}</span><b>${it.name}</b><span class="perk">${it.perk}</span>
             ${own?`<span class="tp ok">✓ Màu ${own.c||"đẹp"} ${own.h?`<i class="sw" style="background:${own.h}"></i>`:""}</span>`: open?`<button class="btn sun" data-buy="${it.id}">Mua ${priceFor(it)}$${useV?` <s>${it.price}$</s>`:""}</button>`:`<span class="tp">🔒 Mở ở ${LEVELS[it.lv].name}</span>`}</div>`; }).join("")}</div>
         <p class="sub">Chỉ chiếc iPhone tốt nhất bé có mới được tính thêm giây.</p>`);
       $("#shClose").onclick=()=>{ closeScene(); res(); };
       const uv=$("#useV"); if(uv) uv.onchange=()=>{ useV=uv.checked; paint(); };
+      const rn=$("#buyRename"); if(rn) rn.onclick=async()=>{
+        if(!canPay(CFG.renamePrice)){ toast(`Bé cần hơn ${CFG.renamePrice}$ để mua thẻ đổi tên`); return; }
+        if(await renameFlow()) paint();
+      };
       const bx=$("#buyBox"); if(bx) bx.onclick=async()=>{
         const price=priceFor({price:boxPrice()});
         if(!canPay(price)){ toast(`Bé cần hơn ${price}$ để mua hộp thẻ`); return; }
@@ -3254,17 +3338,17 @@ async function bagScene(){
   if(S.vouchers) items.push({e:"🎟️",n:"Voucher giảm 10$",k:S.vouchers,d:"Khi mua ở cửa hàng, tích ô “Dùng voucher” để được giảm 10$."});
   if(S.amulets) items.push({e:"🧿",n:"Bùa hộ mệnh",k:S.amulets,d:"Khi câu hỏi còn 5 giây, game sẽ hỏi bé có muốn dùng bùa để được chỉ đáp án đúng không."});
   if(S.toys&&S.toys.length) items.push({e:"🧸",n:"Đồ chơi của em bé",k:S.toys.length,d:"Những món quà bé đã tặng em: "+S.toys.join(", ")+"."});
-  SHOP.filter(x=>S.owned[x.id]).forEach(x=>items.push({e:x.emo,n:x.name+(S.owned[x.id].c?` màu ${S.owned[x.id].c}`:""),k:1,d:x.perk}));
+  SHOP.filter(x=>S.owned[x.id]).forEach(x=>items.push({e:x.emo,n:x.name+(S.owned[x.id].c?` màu ${S.owned[x.id].c}`:""),k:1,d:x.perk,shop:x.id,h:S.owned[x.id].h}));
   if(S.career) { const c=CAREERS.find(x=>x[0]===S.career); if(c) items.push({e:c[2],n:`Ước mơ: ${c[1]}`,k:1,d:`Các câu hỏi sẽ có thêm tình huống về nghề ${c[1].toLowerCase()}.`}); }
   const byLv={}; (S.badges||[]).forEach(b=>{ (byLv[b.level]=byLv[b.level]||[]).push(b.id); });
   openScene("bag wide",`<div class="qHead"><span class="qTag riddle">🎒 Túi đồ của ${esc(S.name)}</span><button class="btn white" id="bgClose" style="margin-left:auto">Đóng</button></div>
     <div class="lbl" style="margin-top:6px">🏅 Huy hiệu (bấm để xem)</div>
     <div class="badgeShelf">${Object.keys(byLv).length?Object.keys(byLv).sort().map(L=>byLv[L].map(id=>badgeHTML(id,+L,true,true)).join("")).join(""):`<span class="sub">Chưa có huy hiệu nào. Hoàn thành một ngày để mở túi mù nhé!</span>`}</div>
     <div class="lbl" style="margin-top:8px">🎁 Vật phẩm (bấm để xem)</div>
-    <div class="itemShelf">${items.length?items.map((it,i)=>`<button class="itemBox" data-it="${i}"><span class="e">${it.e}</span><span class="n">${esc(it.n)}</span>${it.k>1?`<b class="k">×${it.k}</b>`:""}</button>`).join(""):`<span class="sub">Chưa có vật phẩm nào.</span>`}</div>`);
+    <div class="itemShelf">${items.length?items.map((it,i)=>`<button class="itemBox" data-it="${i}" ${it.h?`style="border-color:${it.h}"`:""}><span class="e">${it.e}</span><span class="n">${esc(it.n)}</span>${it.k>1?`<b class="k">×${it.k}</b>`:""}</button>`).join(""):`<span class="sub">Chưa có vật phẩm nào.</span>`}</div>`);
   $("#bgClose").onclick=()=>closeScene();
   document.querySelectorAll("#gameBox [data-badge]").forEach(b=>b.onclick=()=>badgeInfo(b.dataset.badge,+b.dataset.lv));
-  document.querySelectorAll("[data-it]").forEach(b=>b.onclick=()=>{ const it=items[+b.dataset.it]; dialog({title:`${it.e} ${esc(it.n)}`,html:`<p>Số lượng: <b>${it.k}</b></p><p>${esc(it.d)}</p>`,buttons:[{label:"Đóng",cls:"mint",val:1}]}); });
+  document.querySelectorAll("[data-it]").forEach(b=>b.onclick=()=>{ const it=items[+b.dataset.it]; if(it.shop) return ownedShow(it.shop); dialog({title:`${it.e} ${esc(it.n)}`,html:`<p>Số lượng: <b>${it.k}</b></p><p>${esc(it.d)}</p>`,buttons:[{label:"Đóng",cls:"mint",val:1}]}); });
 }
 
 /* =========================================================
@@ -3315,7 +3399,7 @@ const BUYERS=[{n:"Chú Quán đẹp trai",g:"m",look:{face:2,hair:1,eyes:6,lips:
               {n:"Huyền My cute phô mai que",g:"f",look:{face:4,hair:7,eyes:9,lips:4,outfit:4,shoes:5}}];
 const BILLS=[1,2,5,10,20,50,100];
 const sellOrders = () => 5 + 2*Math.max(0,S.levelIdx-2);
-const sellTime = () => [60,60,60,40,30,20][S.levelIdx]||20;
+const sellTime = () => [120,120,120,80,60,40][S.levelIdx]||40;
 function makeSell(){
   const g=S.baseGrade, maxP = g<=3?9 : g<=6?20 : 30, maxItems = g<=3?4 : g<=6?7 : 10;
   return {stall:STALL.map(([e,n])=>({e,n,p:R(1,maxP)})), maxItems, i:0, right:0};
@@ -3355,7 +3439,7 @@ function sellScene(){
     };
     const openStep=(b)=>{
       if(locked) return; const p=$("#stepPop"); p.hidden=false;
-      const draw=()=>{ p.innerHTML=`<span class="bill b${b}">${b}$</span><button class="btn white" id="spM">−</button><b class="spN">${tray[b]||0}</b><button class="btn white" id="spP">+</button><button class="btn mint" id="spOk">Xong</button>`;
+      const draw=()=>{ p.innerHTML=`<div class="spCap">Bé chọn mấy tờ của mệnh giá này?</div><div class="spRow"><span class="bill b${b}">${b}$</span><button class="btn white" id="spM">−</button><b class="spN">${tray[b]||0}</b><button class="btn white" id="spP">+</button><button class="btn mint" id="spOk">Xong</button></div>`;
         $("#spM").onclick=()=>{ tray[b]=Math.max(0,(tray[b]||0)-1); sTick(); draw(); upd(); };
         $("#spP").onclick=()=>{ tray[b]=Math.min(20,(tray[b]||0)+1); sTick(); draw(); upd(); };
         $("#spOk").onclick=()=>{ p.hidden=true; }; };
@@ -3447,7 +3531,7 @@ function taskInfo(a){
     case "sell": return {d:`Bán ${sellOrders()} đơn hàng, mỗi đơn có ${sellTime()} giây. Khách mua hàng và đưa tiền, bé chọn các tờ tiền để trả lại tiền thừa.`, g:"Mỗi đơn trả tiền thừa đúng +1$.", l:"Mỗi đơn trả sai hoặc hết giờ −1$."};
     case "read": return {d:"Đọc một đoạn văn tiếng Anh, sau đó nghe 5 câu hỏi được đọc to và chọn đáp án đúng.", g:`Mỗi câu đúng +${CFG.right}$.`, l:`Mỗi câu sai −${CFG.wrong}$.`};
     case "work": return {d:`Trả lời ${CFG.workQ} câu hỏi, mỗi câu ${t} giây. Mỗi ngày đi làm tối đa ${CFG.workMax} lượt.`, g:`Mỗi câu đúng +${workReward()}$.`, l:`Mỗi câu sai −${CFG.wrong}$.`};
-    case "tutor": return {d:`Đọc một bài “Vì sao?” và trả lời câu hỏi, sau đó học ${CFG.tutorQ} câu tiếng Anh. Còn ${tutorLeft()} khóa ở cấp này.`, g:`Trả lời đúng bài đọc +1$. Mỗi câu tiếng Anh đúng +${CFG.right}$.`, l:"Sai không bị trừ tiền."};
+    case "tutor": return {d:`Đọc một bài “Vì sao?” và trả lời câu hỏi, sau đó học ${CFG.tutorQ} câu tiếng Anh. Học được bất cứ lúc nào, còn ${tutorLeft()}/${tutorMaxL()} khóa ở cấp này.`, g:`Trả lời đúng bài đọc +1$. Mỗi câu tiếng Anh đúng +${tutorRew()}$${S.owned&&S.owned.laptop?" (đã nhân đôi nhờ 💻 Laptop)":""}.`, l:"Sai không bị trừ tiền."};
   }
   return null;
 }
@@ -3498,6 +3582,55 @@ async function aiDiagnose(){
     if(!ok){ try{ const ta=document.createElement("textarea"); ta.value=report; document.body.appendChild(ta); ta.select(); ok=document.execCommand("copy"); ta.remove(); }catch(e){} }
     toast(ok?"📋 Đã sao chép, dán vào tin nhắn để gửi nhé":"Không tự sao chép được, hãy chụp màn hình gửi nhé",3000);
   }
+}
+
+/* =========================================================
+   XEM ĐỒ ĐÃ MUA: nhân vật đứng cạnh xe / cầm điện thoại (đúng màu đã quay)
+   ========================================================= */
+function vehSVG(id,c){
+  c=c||"#ff8fb8"; const d=shade(c,-0.28), K="#3a3346", W=`<g>`;
+  if(id==="bike") return `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" class="veh">
+    <ellipse cx="100" cy="134" rx="85" ry="5" fill="#000" opacity=".08"/>
+    <g fill="none" stroke="${K}" stroke-width="7"><circle cx="45" cy="100" r="31"/><circle cx="155" cy="100" r="31"/></g>
+    <g fill="none" stroke="#b9b4c4" stroke-width="2"><path d="M45 69 V131 M14 100 H76 M155 69 V131 M124 100 H186"/></g>
+    <g stroke="${c}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M45 100 L82 52 L132 52 L155 100 M82 52 L100 100 L45 100 M100 100 L132 52"/><path d="M132 52 L126 30"/></g>
+    <path d="M114 28 L140 28" stroke="${K}" stroke-width="7" stroke-linecap="round"/><path d="M70 45 L96 45" stroke="${K}" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="100" cy="100" r="8" fill="${d}"/><rect x="138" y="58" width="16" height="9" rx="3" fill="#fff4b0" stroke="${d}" stroke-width="2"/></svg>`;
+  if(id==="moto") return `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" class="veh">
+    <ellipse cx="100" cy="134" rx="85" ry="5" fill="#000" opacity=".08"/>
+    <circle cx="48" cy="110" r="22" fill="${K}"/><circle cx="48" cy="110" r="9" fill="#c9c4d4"/><circle cx="152" cy="110" r="22" fill="${K}"/><circle cx="152" cy="110" r="9" fill="#c9c4d4"/>
+    <path d="M28 104 Q26 80 60 78 L118 78 L132 34 L150 34 L150 44 L141 44 L134 84 Q172 84 174 106 L174 108 L22 108 Z" fill="${c}" stroke="${d}" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M60 78 Q66 62 92 64 L114 66 L112 78 Z" fill="${d}"/><rect x="52" y="58" width="62" height="12" rx="6" fill="#4a3036"/>
+    <path d="M126 30 L156 30" stroke="${K}" stroke-width="6" stroke-linecap="round"/><circle cx="153" cy="50" r="7" fill="#fff4b0" stroke="${d}" stroke-width="2"/>
+    <path d="M36 96 H110" stroke="#fff" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"/></svg>`;
+  if(id==="vf3") return `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" class="veh">
+    <ellipse cx="100" cy="134" rx="90" ry="5" fill="#000" opacity=".08"/>
+    <path d="M40 58 L56 20 Q60 14 68 14 L140 14 Q148 14 152 20 L170 58 Z" fill="${c}" stroke="${d}" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="12" y="54" width="176" height="56" rx="20" fill="${c}" stroke="${d}" stroke-width="3"/>
+    <path d="M60 54 L70 24 L100 24 L100 54 Z M106 54 L106 24 L136 24 L152 54 Z" fill="#cdeeff" stroke="${d}" stroke-width="2"/>
+    <path d="M24 76 H176" stroke="#fff" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"/>
+    <rect x="166" y="64" width="16" height="12" rx="4" fill="#fff4b0"/><rect x="16" y="64" width="12" height="12" rx="4" fill="#ff6b7a"/>
+    <path d="M104 70 h14" stroke="${d}" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="55" cy="110" r="20" fill="${K}"/><circle cx="55" cy="110" r="8" fill="#c9c4d4"/><circle cx="147" cy="110" r="20" fill="${K}"/><circle cx="147" cy="110" r="8" fill="#c9c4d4"/></svg>`;
+  if(id==="laptop") return `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" class="veh">
+    <ellipse cx="100" cy="134" rx="88" ry="5" fill="#000" opacity=".08"/>
+    <rect x="34" y="12" width="132" height="90" rx="10" fill="${c}" stroke="${d}" stroke-width="4"/>
+    <rect x="44" y="21" width="112" height="72" rx="5" fill="#2e2a40"/>
+    <path d="M56 80 Q80 48 100 66 Q118 40 146 70 L146 86 L56 86 Z" fill="#5fb4ea" opacity=".85"/><circle cx="132" cy="36" r="8" fill="#ffd25e"/>
+    <path d="M14 104 L186 104 L176 124 Q174 128 168 128 L32 128 Q26 128 24 124 Z" fill="${c}" stroke="${d}" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="84" y="110" width="32" height="7" rx="3" fill="${d}"/></svg>`;
+  return `<svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" class="veh phone">
+    <rect x="18" y="8" width="84" height="176" rx="18" fill="${c}" stroke="${d}" stroke-width="4"/>
+    <rect x="28" y="20" width="42" height="42" rx="12" fill="${shade(c,-0.12)}" stroke="${d}" stroke-width="2"/>
+    <circle cx="40" cy="32" r="7" fill="${K}"/><circle cx="58" cy="32" r="7" fill="${K}"/><circle cx="40" cy="50" r="7" fill="${K}"/><circle cx="58" cy="50" r="3" fill="#fff4b0"/>
+    <circle cx="40" cy="32" r="2.5" fill="#7fa8d6"/><circle cx="58" cy="32" r="2.5" fill="#7fa8d6"/><circle cx="40" cy="50" r="2.5" fill="#7fa8d6"/>
+    <path d="M36 150 Q60 162 84 150" stroke="#fff" stroke-opacity=".5" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
+}
+function ownedShow(id){
+  const it=SHOP.find(x=>x.id===id), own=S.owned[id]||{}, isPhone=!!it.sec;
+  return dialog({cls:"vehCard",title:`${it.emo} ${esc(it.name)}${own.c?` màu ${esc(own.c)}`:""}`,
+    html:`<div class="vehShow ${isPhone?"ph":""}"><div class="vehChar">${charSVG({mood:"happy"})}</div><div class="vehItem">${vehSVG(isPhone?"phone":id,own.h)}</div></div>
+      <p>${esc(it.perk)}</p>`,buttons:[{label:"Tuyệt quá!",cls:"mint",val:1}]});
 }
 
 /* =========================================================
@@ -3558,10 +3691,10 @@ async function getIP(){
 }
 function playerDoc(){
   return {app:"kawaii-life",v:1,name:S.name,file:S.file,createdAt:S.createdAt,ip:S.ip||"không xác định",
-    gender:S.gender,from:S.from||"",babyName:S.babyName,babyGender:S.babyGender,buddy:S.buddy,
-    record:S.record||{level:S.levelIdx,money:S.money,at:S.createdAt},save:S};
+    gender:S.gender,look:S.look,from:S.from||"",babyName:S.babyName,babyGender:S.babyGender,buddy:S.buddy,
+    record:S.record||{level:S.levelIdx,money:S.money,at:S.createdAt},updatedAt:new Date().toISOString(),save:S};
 }
-function docToEntry(o){ return o && o.app==="kawaii-life" ? {name:o.name,file:o.file,from:o.from||"",createdAt:o.createdAt,ip:o.ip,babyName:o.babyName,buddy:o.buddy,gender:o.gender,record:o.record} : null; }
+function docToEntry(o){ return o && o.app==="kawaii-life" ? {name:o.name,file:o.file,from:o.from||"",look:o.look||null,updatedAt:o.updatedAt||null,createdAt:o.createdAt,ip:o.ip,babyName:o.babyName,buddy:o.buddy,gender:o.gender,record:o.record} : null; }
 
 /* ---- kiểm tra trùng tên ---- */
 async function srvPost(body){
@@ -3597,20 +3730,13 @@ async function persistPlayer(){
   if(!S) return;
   if(!S.file){ S.file=fileFor(S.name); S.createdAt=S.createdAt||new Date().toISOString(); }
   const doc=playerDoc(), loc=localPlayers(); loc[S.file]=docToEntry(doc); setLocalPlayers(loc);
-  if(SRV.ok){
-    if(!S.token){ const r=await srvPost({action:"register",name:S.name,from:S.from||"",gender:S.gender,babyName:S.babyName,buddy:S.buddy,record:S.record}); if(r.data.ok){ S.token=r.data.token; S.ip=r.data.entry.ip; save(); } }
-    else srvPost({action:"update",file:S.file,token:S.token,from:S.from||"",gender:S.gender,babyName:S.babyName,buddy:S.buddy,record:S.record});
-  }
+  if(SRV.ok) await srvSync();
   if(FS.dir && FS.ok){ try{ await fsWrite(S.file,JSON.stringify(doc,null,1)); await writeRegistry(); }catch(e){ toast("Không ghi được file vào thư mục, đã lưu trong trình duyệt"); } }
 }
 async function registerPlayer(){
   S.file=fileFor(S.name); S.createdAt=new Date(S.created||Date.now()).toISOString(); S.ip="đang lấy…";
   S.record={level:S.levelIdx,money:S.money,at:S.createdAt}; save();
-  if(SRV.ok){
-    const r=await srvPost({action:"register",name:S.name,from:S.from||"",gender:S.gender,babyName:S.babyName,buddy:S.buddy,record:S.record});
-    if(r.data.ok){ S.token=r.data.token; S.ip=r.data.entry.ip; S.createdAt=r.data.entry.createdAt; save(); }
-    else if(r.status===409) toast(`Tên “${S.name}” vừa có người khác dùng trên server, bé sẽ không có tên trên bảng xếp hạng online.`,4000);
-  } else S.ip=await getIP();
+  if(!SRV.ok) S.ip=await getIP();
   save(); await persistPlayer();
 }
 async function removePlayer(file){
@@ -3639,16 +3765,45 @@ async function rankScene(){
     const medal=i=>["🥇","🥈","🥉"][i]||`#${i+1}`;
     const store = SRV.ok ? `🌐 Bảng xếp hạng online của tất cả các bạn chơi.` : FS.dir&&FS.ok ? `📁 Đang lưu vào thư mục “${esc(FS.name)}”`
       : FS.dir ? `📁 Đã chọn thư mục “${esc(FS.name)}” nhưng cần cho phép lại` : fsSupported ? "💾 Đang lưu trong trình duyệt này" : "💾 Đang lưu trong trình duyệt này (máy này chưa hỗ trợ lưu ra thư mục)";
-    openScene("rank wide",`<div class="qHead"><span class="qTag riddle">🏆 Bảng xếp hạng</span><span class="qTitle">Cấp cao nhất › Số dư › Thời gian đạt kỷ lục</span><button class="btn white" id="rkClose" style="margin-left:auto">Đóng</button></div>
+    openScene("rank wide",`<div class="qHead"><span class="qTag riddle">🏆 Bảng xếp hạng</span><span class="qTitle">Cấp cao nhất › Số dư › Thời gian đạt kỷ lục</span><div class="rkBtns"><button class="btn white" id="rkClose">Đóng</button><button class="btn white rkClearBtn" id="rkClear" style="display:${ADMIN.shown?"block":"none"}">Clear</button></div></div>
       <p class="storeInfo">${store} ${fsSupported&&!(FS.dir&&FS.ok)?`<button class="btn lav" id="rkConnect" style="padding:2px 12px;font-size:14px">${FS.dir?"🔓 Cho phép lại":"📁 Kết nối thư mục"}</button>`:""}</p>
-      <div class="rankWrap"><table class="rankT"><thead><tr><th>Hạng</th><th>Nhân vật</th><th>Quê hương của bạn</th><th>Em bé</th><th>Bạn đồng hành</th><th>Kỷ lục</th><th>Số dư</th><th>Bắt đầu</th><th>Đạt kỷ lục</th><th></th></tr></thead>
-      <tbody>${list.length?list.map((e,i)=>`<tr class="${S&&S.file===e.file?"me":""}"><td class="md">${medal(i)}</td><td><b>${esc(e.name)}</b> ${e.gender==="f"?"👧":e.gender==="m"?"👦":""}</td><td>${esc(e.from||"—")}</td><td>${esc(e.babyName||"—")}</td>
+      <div class="rankWrap"><table class="rankT"><thead><tr><th>Hạng</th><th>Nhân vật</th><th>Quê hương của bạn</th><th>Em bé</th><th>Bạn đồng hành</th><th>Kỷ lục</th><th>Số dư</th><th>Bắt đầu</th><th>Cập nhật mới nhất</th><th></th></tr></thead>
+      <tbody>${list.length?list.map((e,i)=>`<tr class="${S&&S.file===e.file?"me":""}"><td class="md">${medal(i)}</td><td><button class="rkName" data-f="${esc(e.file)}"><b>${esc(e.name)}</b> ${e.gender==="f"?"👧":e.gender==="m"?"👦":""}</button></td><td>${esc(e.from||"—")}</td><td>${esc(e.babyName||"—")}</td>
         <td>${MASCOTS[e.buddy]?mascotSVG(e.buddy,"happy")+MASCOTS[e.buddy].nm:"—"}</td><td>${recordName(e.record.level)}</td><td>${e.record.money}$</td>
-        <td>${fmtTime(e.createdAt)}</td><td>${fmtTime(e.record.at)}<br><small>sau ${fmtDur(new Date(e.record.at)-new Date(e.createdAt))}</small></td>
-        <td>${!SRV.ok||(S&&S.file===e.file)?`<button class="rkDel" data-f="${esc(e.file)}" data-n="${esc(e.name)}" title="Xóa người chơi">🗑️</button>`:""}</td></tr>`).join("")
+        <td>${fmtTime(e.createdAt)}</td><td>${fmtTime(e.updatedAt||e.record.at)}</td>
+        <td>${ADMIN.on?`<button class="rkAdm" data-f="${esc(e.file)}" data-n="${esc(e.name)}" title="Xóa khỏi bảng xếp hạng">🗑️ Delete</button>`: !SRV.ok||(S&&S.file===e.file)?`<button class="rkDel" data-f="${esc(e.file)}" data-n="${esc(e.name)}" title="Xóa người chơi">🗑️</button>`:""}</td></tr>`).join("")
         :`<tr><td colspan="10" style="text-align:center;padding:16px">Chưa có ai trong bảng xếp hạng. Chơi xong một cấp là có tên ở đây!</td></tr>`}</tbody></table></div>`);
     $("#rkClose").onclick=()=>closeScene();
+    let taps=0, tapT=0;
+    $("#gameBox .qTag").onclick=()=>{ const n=Date.now(); taps = n-tapT<1500 ? taps+1 : 1; tapT=n; if(taps>=5){ ADMIN.shown=true; $("#rkClear").style.display="block"; } };
+    $("#rkClear").onclick=async()=>{
+      if(ADMIN.on){ ADMIN.on=false; paint(); return; }
+      const v=await dialog({title:"🔐 Nhập mã quản trị",html:`<div class="babyName"><input type="password" id="admCode" autocomplete="off"></div><p class="err" id="admErr"></p>`,buttons:[{label:"Xác nhận",cls:"mint",val:true},{label:"Hủy",cls:"white",val:false}]});
+      if(!v) return;
+      const code=(($("#admCode")||{}).value||"").trim();
+      let ok=adminHash(code)===ADMIN_H;
+      if(ok && SRV.ok){ const r=await srvPost({action:"adminCheck",code}); ok=!!r.data.ok; }
+      if(!ok){ toast("Mã không đúng"); return; }
+      ADMIN.on=true; ADMIN.code=code; toast("🔓 Đã bật chế độ quản trị: có thể xóa tên trên bảng xếp hạng"); paint();
+    };
+    document.querySelectorAll(".rkAdm").forEach(b=>b.onclick=async()=>{
+      const ok=await dialog({mascot:1,mood:"sad",title:`Xóa ${b.dataset.n} khỏi bảng xếp hạng?`,html:"<p>Nếu bạn ấy chơi tiếp bằng hồ sơ này, tên sẽ được cập nhật lại lên bảng xếp hạng.</p>",buttons:[{label:"Xóa",val:true},{label:"Thôi",cls:"white",val:false}]});
+      if(!ok) return;
+      if(SRV.ok){ const r=await srvPost({action:"adminDelete",file:b.dataset.f,code:ADMIN.code}); if(!r.data.ok){ toast("Không xóa được (mã lỗi "+r.status+")"); return; } }
+      const loc=localPlayers(); delete loc[b.dataset.f]; setLocalPlayers(loc);
+      if(FS.dir && FS.ok){ await fsDelete(b.dataset.f); await writeRegistry(); }
+      toast("Đã xóa "+b.dataset.n); paint();
+    });
     const c=$("#rkConnect"); if(c) c.onclick=async()=>{ const ok = FS.dir ? await fsEnsure() : await fsConnect(); if(ok){ if(S&&S.file) await persistPlayer(); await writeRegistry(); } paint(); };
+    document.querySelectorAll(".rkName").forEach(b=>b.onclick=()=>{
+      const e=list.find(x=>x.file===b.dataset.f); if(!e) return;
+      const pic = e.gender && e.look ? charSVG({gender:e.gender,look:e.look,mood:"happy"}) : "";
+      dialog({cls:"rkCard",title:`${e.gender==="f"?"👧":e.gender==="m"?"👦":"🌸"} ${esc(e.name)}`,
+        html:`${pic?`<div class="reveal">${pic}</div>`:`<p class="sub">Bạn này chưa có dữ liệu ngoại hình (sẽ có sau khi bạn ấy hoàn thành một ngày).</p>`}
+          <p>${recordName(e.record.level)} · ${e.record.money}$${e.from?` · Quê hương: ${esc(e.from)}`:""}</p>
+          <p class="sub">Em bé: ${esc(e.babyName||"—")} · Bạn đồng hành: ${MASCOTS[e.buddy]?MASCOTS[e.buddy].nm:"—"}</p>`,
+        buttons:[{label:"Đóng",cls:"mint",val:1}]});
+    });
     document.querySelectorAll(".rkDel").forEach(b=>b.onclick=async()=>{
       const ok=await dialog({mascot:1,mood:"sad",title:`Xóa ${b.dataset.n}?`,html:"<p>Dữ liệu và file json của người chơi này sẽ bị xóa khỏi bảng xếp hạng.</p>",buttons:[{label:"Xóa",val:true},{label:"Thôi",cls:"white",val:false}]});
       if(!ok) return; await removePlayer(b.dataset.f);
@@ -3665,6 +3820,78 @@ function renderStoreRow(){
   el.innerHTML = srv + (FS.dir&&FS.ok ? `<span class="sub">📁 Đang lưu vào thư mục “${esc(FS.name)}”</span>`
     : `<button class="btn lav" id="stConnect" style="padding:3px 12px;font-size:14px">${FS.dir?"🔓 Cho phép lại thư mục lưu":"📁 Chọn thư mục chứa file game để lưu"}</button><span class="sub"> (không bắt buộc, để lưu file json)</span>`);
   const b=$("#stConnect"); if(b) b.onclick=async()=>{ if(FS.dir) await fsEnsure(); else await fsConnect(); renderStoreRow(); };
+}
+
+/* cập nhật bảng xếp hạng mỗi khi xong một ngày (số tiền, ngoại hình) */
+function dailyRecord(){
+  if(!S) return;
+  const r=S.record||{level:-1};
+  if(S.levelIdx>r.level) S.record={level:S.levelIdx,money:S.money,at:new Date().toISOString()};
+  else if(S.levelIdx===r.level) S.record={...r,money:S.money};
+  save(); persistPlayer();
+}
+/* thẻ đổi tên */
+async function renameFlow(){
+  let msg="";
+  while(true){
+    const box=await new Promise(res=>{
+      dialog({cls:"rename",title:"🏷️ Thẻ đổi tên",html:`<p>Nhập tên mới cho nhân vật (giá ${CFG.renamePrice}$, chỉ trừ tiền khi lưu thành công).</p>
+        <div class="babyName"><input type="text" id="rnInput" maxlength="16" value="${esc(S.name)}"></div><p class="err" id="rnErr">${esc(msg)}</p>`,
+        buttons:[{label:"💾 Lưu",cls:"mint",val:"save"},{label:"Hủy",cls:"white",val:null}]}).then(v=>res(v));
+      setTimeout(()=>{ const i=$("#rnInput"); if(i){ i.focus(); i.select(); } },80);
+    });
+    if(box!=="save") return false;
+    const nn=(($("#rnInput")||{}).value||"").trim();
+    if(!nn){ msg="Bé hãy nhập tên nhé."; continue; }
+    if(slugName(nn)===slugName(S.name)){ msg="Tên mới đang giống tên cũ."; continue; }
+    if(!canPay(CFG.renamePrice)){ toast(`Bé cần hơn ${CFG.renamePrice}$ để đổi tên`); return false; }
+    let ok=true;
+    if(SRV.ok && S.token){ const r=await srvPost({action:"update",file:S.file,token:S.token,name:nn}); if(r.status===409){ ok=false; msg=`Tên “${nn}” đã có người dùng rồi.`; } else if(!r.data.ok){ ok=false; msg="Chưa lưu được lên server, thử lại sau nhé."; } }
+    else { const loc=localPlayers(); if(Object.values(loc).some(e=>e.file!==S.file && slugName(e.name)===slugName(nn))){ ok=false; msg=`Tên “${nn}” đã có người dùng rồi.`; } }
+    if(!ok) continue;
+    spend(CFG.renamePrice); const old=S.name; S.name=nn; save(); await persistPlayer(); hud(); renderStage(); confetti(20);
+    toast(`🏷️ Đã đổi tên: ${old} → ${nn}`,3000); return true;
+  }
+}
+
+/* ---- quản trị bảng xếp hạng: mã chỉ lưu dạng băm ---- */
+const ADMIN={on:false,shown:false,code:""};
+const ADMIN_H="ff6b2e8d";
+function fnv32(str){ let h=0x811c9dc5; const b=new TextEncoder().encode(str); for(const c of b){ h^=c; h=Math.imul(h,0x01000193)>>>0; } return h.toString(16).padStart(8,"0"); }
+function adminHash(code){ const s="kawaii-life-admin:"+code; return fnv32(fnv32(s)+s); }
+
+/* ---- đồng bộ lên server: tự đăng ký lại nếu bị xóa; trùng tên thì đổi tên miễn phí ---- */
+let syncing=false;
+function askFreeName(msg){
+  return new Promise(res=>{
+    dialog({cls:"rename",title:"🏷️ Chọn tên mới (miễn phí)",html:`<p>${esc(msg)}</p><div class="babyName"><input type="text" id="fnInput" maxlength="16" value="${esc(S.name)}"></div>`,
+      buttons:[{label:"💾 Lưu",cls:"mint",val:true},{label:"Để sau",cls:"white",val:false}]})
+      .then(v=>{ const nn=(($("#fnInput")||{}).value||"").trim(); res(v&&nn?nn:null); });
+    setTimeout(()=>{ const i=$("#fnInput"); if(i){ i.focus(); i.select(); } },80);
+  });
+}
+async function srvSync(){
+  if(syncing || !S) return; syncing=true;
+  try{
+    const payload={look:S.look,from:S.from||"",gender:S.gender,babyName:S.babyName,buddy:S.buddy,record:S.record};
+    if(S.token){
+      const r=await srvPost({action:"update",file:S.file,token:S.token,...payload});
+      if(r.data.ok) return;
+      if(r.status===404 || r.status===403){ S.token=null; save(); } else return;
+    }
+    let r=await srvPost({action:"register",name:S.name,...payload}), tries=0;
+    while(r.status===409 && tries<5){
+      tries++;
+      const nn=await askFreeName(`Tên “${S.name}” trên bảng xếp hạng đã có bạn khác dùng. Bé hãy chọn tên mới để có tên trên bảng xếp hạng nhé.`);
+      if(!nn) return;
+      S.name=nn; save(); hud(); renderStage();
+      r=await srvPost({action:"register",name:S.name,...payload});
+    }
+    if(r.data.ok){
+      const oldFile=S.file; S.token=r.data.token; S.ip=r.data.entry.ip; S.file=r.data.entry.file; save();
+      if(oldFile!==S.file){ const loc=localPlayers(); delete loc[oldFile]; loc[S.file]=docToEntry(playerDoc()); setLocalPlayers(loc); }
+    }
+  } finally{ syncing=false; }
 }
 /* =========================================================
    KHỞI ĐỘNG
@@ -3685,6 +3912,14 @@ try{ const bad=Object.keys(CFG).filter(k=>CFG[k]===undefined||Number.isNaN(CFG[k
   const nj=document.getElementById("nojs"); if(nj) nj.remove();
   initSetup(null);
   const saved=loadSave();
+  if(saved && saved.appVersion!==APP_VERSION && !["over","end"].includes(saved.phase)){
+    await dialog({mascot:"bunny",mood:"wow",title:"🎉 Game có bản cập nhật mới!",
+      html:`<p>Kawaii Life vừa được cập nhật lên <b>phiên bản ${APP_VERSION}</b> lúc ${APP_RELEASED}.</p><p>Bấm <b>Cập nhật</b> để tải lại dữ liệu của ${esc(saved.name)} theo phiên bản mới. Tiền, huy hiệu và đồ đã mua vẫn được giữ nguyên.</p>`,
+      buttons:[{label:"⬆️ Cập nhật",cls:"mint",val:1}]});
+    const fresh=normalize(JSON.parse(JSON.stringify(saved))); fresh.appVersion=APP_VERSION;
+    S=fresh; save(); S=null; Object.assign(saved,fresh);
+    toast(`✅ Đã cập nhật lên phiên bản ${APP_VERSION}`,2600);
+  }
   if(saved && !["over","end"].includes(saved.phase)){
     const where = saved.phase==="create" ? "bước tạo nhân vật" : LEVELS[saved.levelIdx].name;
     const v=await dialog({mascot:"bunny",title:`Chào ${esc(saved.name)}!`,
