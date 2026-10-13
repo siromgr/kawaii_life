@@ -633,6 +633,38 @@ input{font:inherit;color:inherit}
 .stVoice select{border:3px solid var(--pinkL);border-radius:12px;padding:4px 6px;font:inherit;font-size:15px;background:#fff;color:var(--ink);width:100%}
 .menu .stVoice .btn{width:auto;margin-top:0;padding:4px 14px;font-size:14px}
 
+/* v11: thú cưng + cột hai bên nhân vật */
+.charBox{position:relative}
+.sideCol{position:absolute;top:2%;bottom:2%;width:clamp(40px,13vh,56px);display:flex;flex-direction:column;gap:4px;overflow:auto;z-index:2;scrollbar-width:none}
+.sideCol::-webkit-scrollbar{display:none}
+.sideCol.left{left:0}.sideCol.right{right:0}
+.sideCell{border:3px solid #f6e3f0;background:#fff;border-radius:12px;padding:2px;display:flex;flex-direction:column;align-items:center;flex:none;box-shadow:0 2px 0 rgba(0,0,0,.06)}
+.sideCell svg{width:100%;height:auto;display:block}
+.sideCell b{font-size:clamp(18px,5vh,26px);line-height:1.15}
+.sideCell span{font-size:9px;font-weight:800;line-height:1.05;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.owned{display:none}
+.petBig{display:flex;justify-content:center}.petBig svg{width:min(42vh,200px);height:auto}
+.adopt{width:min(640px,95vw)}
+.adoptGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.adoptBtn{border:3px solid var(--pinkL);background:#fff;border-radius:16px;padding:4px;display:flex;flex-direction:column;align-items:center;font-weight:800}
+.adoptBtn svg{width:100%;height:auto}
+.villaTop{border-radius:16px;overflow:hidden;margin-top:6px;height:clamp(70px,20vh,120px)}
+.villaBg{width:100%;height:100%;display:block}
+.petGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.petCell{position:relative;border:3px solid #ffd0e0;background:#fff;border-radius:16px;padding:4px;display:flex;flex-direction:column;align-items:center;font-weight:800}
+.petCell .pName{font-size:clamp(12px,3vh,15px);color:var(--pinkD);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.petCell svg{width:100%;height:auto;max-height:16vh}
+.petCell .pState{font-size:12px;color:var(--redD)}
+.petCell.fed{border-color:var(--mint);background:var(--mintL)}.petCell.fed .pState{color:var(--mintD)}
+.petCell.eating svg{animation:bump .4s 3}
+.petCell .food{position:absolute;top:30%;right:8%;font-size:26px;animation:wob .6s 3}
+.wideCard{width:min(640px,96vw)}
+.profile{display:flex;justify-content:center;margin:4px 0}
+.pStage{position:relative;width:min(100%,380px);height:min(48vh,280px);background:linear-gradient(#fff,#fff6fb 70%,#ffe6f2);border-radius:20px}
+.pStage .pChar{position:absolute;left:18%;right:18%;top:0;bottom:0;display:flex;justify-content:center}.pStage .pChar svg{height:100%}
+.pStage .sideCol{width:clamp(44px,14vh,60px)}
+.villaTop{background:linear-gradient(#dff3ff 80%,#a8e6a1 80%)}
+
 </style>
 </head>
 <body>
@@ -774,6 +806,7 @@ const CFG = {
 /* cửa hàng: lv = cấp học mở bán (2 = THCS, 4 = Đại học, 5 = Đi làm) */
 const SHOP=[
   {id:"bike",name:"Xe đạp",emo:"🚲",price:20,lv:2,perk:"Đi học: mỗi câu đúng +1$"},
+  {id:"villa",name:"Biệt thự thú cưng",emo:"🏡",price:50,lv:3,perk:"Nhận nuôi thú cưng (5$/bạn), mỗi ngày cho mỗi bạn ăn +1$"},
   {id:"laptop",name:"Laptop",emo:"💻",price:50,lv:3,perk:"Học phụ đạo: điểm thưởng ×2"},
   {id:"moto",name:"Xe máy",emo:"🛵",price:60,lv:4,perk:"Đi học, đi làm: mỗi câu đúng +1$"},
   {id:"vf3",name:"Ô tô VinFast VF 3",emo:"🚗",price:250,lv:5,perk:"Đi làm: mỗi câu đúng +2$"},
@@ -781,7 +814,7 @@ const SHOP=[
   {id:"ip17",name:"iPhone 17",emo:"📱",price:80,lv:5,perk:"+4 giây mỗi câu hỏi",sec:4},
   {id:"ip18",name:"iPhone 18",emo:"📱",price:100,lv:5,perk:"+5 giây mỗi câu hỏi",sec:5}
 ];
-const APP_VERSION="13/10/2026 (bản 9)";
+const APP_VERSION="13/10/2026 (bản 10)";
 const APP_RELEASED="13/10/2026";
 const BASE_ACTS=["study","eat","bath","sleep"], MID_ACTS=[...BASE_ACTS,"chores","baby"];
 const LEVELS = [
@@ -803,10 +836,11 @@ const ACTS = {
   cook:{name:"Đi chợ giúp mẹ",emo:"🧺",kind:"earn"},
   sell:{name:"Bán hàng giúp mẹ",emo:"🏪",kind:"earn"},
   read:{name:"Đọc sách",emo:"📖",kind:"earn"},
+  pets:{name:"Biệt thự thú cưng",emo:"🏡",kind:"earn"},
   tutor:{name:"Học phụ đạo",emo:"📝",kind:"earn"}
 };
-const TILE_ORDER=["study","eat","bath","sleep","chores","baby","cook","sell","read","work","tutor","shop"];
-const EARN_ACTS=["study","chores","work","cook","sell","read"];
+const TILE_ORDER=["study","eat","bath","sleep","chores","baby","pets","cook","sell","read","work","tutor","shop"];
+const EARN_ACTS=["study","chores","work","cook","sell","read","pets"];
 const SUBJ = {math:"Toán",en:"Tiếng Anh",vn:"Tiếng Việt",riddle:"Đố mẹo",eye:"Tập mắt",social:"Giao tiếp",camb:"Cambridge",listen:"Nghe",read:"Đọc hiểu"};
 const DNAME = ["Dễ","Vừa","Khó"];
 
@@ -2012,7 +2046,7 @@ function validSave(o){ return o && (o.v===1||o.v===2) && typeof o.name==="string
 function normalize(o){
   o.v=2; o.tutorUsed=o.tutorUsed||0; o.babyUnlocked=!!o.babyUnlocked; o.babyName=o.babyName||pick(BABY_NAMES);
   if(!o.day) o.day={done:o.dayDone||{}}; delete o.dayDone;
-  o.view=o.view||"svg"; o.stats=o.stats||{right:0,wrong:0}; o.usedQ=o.usedQ||[]; o.owned=o.owned||{}; o.buddy=o.buddy||"bunny"; o.badges=o.badges||[]; o.badgeSets=o.badgeSets||{}; if(o.dayCount==null) o.dayCount=o.cycleDone||0; o.from=o.from||""; o.tickets=o.tickets||{}; o.vouchers=o.vouchers||0; o.amulets=o.amulets||0; o.toys=o.toys||[]; o.cambLevel=o.cambLevel||"movers"; o.babyGender=o.babyGender||pick(["m","f"]);
+  o.view=o.view||"svg"; o.stats=o.stats||{right:0,wrong:0}; o.usedQ=o.usedQ||[]; o.owned=o.owned||{}; o.buddy=o.buddy||"bunny"; o.badges=o.badges||[]; o.pets=o.pets||[]; o.badgeSets=o.badgeSets||{}; if(o.dayCount==null) o.dayCount=o.cycleDone||0; o.from=o.from||""; o.tickets=o.tickets||{}; o.vouchers=o.vouchers||0; o.amulets=o.amulets||0; o.toys=o.toys||[]; o.cambLevel=o.cambLevel||"movers"; o.babyGender=o.babyGender||pick(["m","f"]);
   Object.keys(o.owned).forEach(k=>{ if(o.owned[k]===true) o.owned[k]={}; }); ["ip12","ip13","ip14","ip15"].forEach(k=>delete o.owned[k]);
   if(o.st && o.st.cat && o.st.resets==null) o.st.resets=0;
   return o;
@@ -2045,7 +2079,7 @@ const canPay = n => S.money - n >= 1;          // mua sắm luôn chừa lại �
 function spend(n){ addMoney(-n); if(S.money<=0){ outOfMoney(); return false; } return true; }
 
 /* ---------- kiểm tra kẹt tiền ---------- */
-function remainingActs(){ return lv().acts.filter(a=>!S.day.done[a]); }
+function remainingActs(){ return dayActs().filter(a=>!isDone(a)); }
 function minCost(a){
   const d=S.day;
   switch(a){
@@ -2111,10 +2145,12 @@ function renderStage(){
   const aiFresh = S.aiImg && S.aiImg.key===key;
   const strip = CATS.map(c=>{ const s=img(c); return `<div title="${CAT_NAME[c]}" style="${s?`background-image:url(${s})`:""}">${s?"":CAT_EMO[c]}</div>`; }).join("");
   const own=SHOP.filter(x=>S.owned[x.id]).map(x=>`<span class="ownIt" style="border-color:${S.owned[x.id].h||"#fff"}" title="${x.name} ${S.owned[x.id].c||""}">${x.emo}</span>`).join("");
-  el.innerHTML = top + (own?`<div class="owned" title="Đồ đã mua">${own}</div>`:"") + `<div class="charBox">${aiOn && aiFresh ? `<img class="aiImg loading" src="${S.aiImg.url}" alt="Ảnh AI vẽ nhân vật"><span class="aiWait">✨ AI đang vẽ…</span>` : charSVG({mood:"normal"})}<div class="pedestal"></div></div>
+  el.innerHTML = top + `<div class="charBox">${sideColsHTML(petList(),S.owned||{},true)}${aiOn && aiFresh ? `<img class="aiImg loading" src="${S.aiImg.url}" alt="Ảnh AI vẽ nhân vật"><span class="aiWait">✨ AI đang vẽ…</span>` : charSVG({mood:"normal"})}<div class="pedestal"></div></div>
     <div class="strip">${strip}</div>
     <div class="viewTog">${["hub","trans"].includes(S.phase)?`<button id="bagBtn" class="bagBtn">🎒 Túi đồ</button>`:""}</div>`;
   const bb=el.querySelector("#bagBtn"); if(bb) bb.onclick=()=>bagScene();
+  el.querySelectorAll(".pCell").forEach(b=>b.onclick=()=>{ const x=petList()[+b.dataset.pi]; if(x) petInfo(x); });
+  el.querySelectorAll(".iCell").forEach(b=>b.onclick=()=>ownedShow(b.dataset.it));
   const im=el.querySelector(".aiImg");
   if(im){ im.onload=()=>{ im.classList.remove("loading"); const w=el.querySelector(".aiWait"); w&&w.remove(); };
           im.onerror=()=>{ toast("Không tải được ảnh AI (cần có mạng). Đang dùng hình vẽ."); S.view="svg"; save(); renderStage(); }; }
@@ -2460,7 +2496,7 @@ function tileTip(a){
 function renderHub(){
   S.phase="hub"; save();
   const L=lv(), el=$("#scr-hub"), d=S.day;
-  const todo=L.acts.map(a=>`<span class="${d.done[a]?"ok":""}">${d.done[a]?"✓":"○"} ${ACTS[a].name}</span>`).join("");
+  const todo=dayActs().map(a=>`<span class="${isDone(a)?"ok":""}">${isDone(a)?"✓":"○"} ${a==="pets"?"Cho thú cưng ăn":ACTS[a].name}</span>`).join("");
   const bset=ensureBadgeSet(), dots=bset.map(id=>badgeHTML(id,S.levelIdx,hasBadge(id,S.levelIdx),false)).join("");
   const tiles=TILE_ORDER.map(a=>{
     const T=ACTS[a];
@@ -2471,6 +2507,11 @@ function renderHub(){
     if(a==="shop"){
       const open=S.levelIdx>=2, cnt=SHOP.filter(x=>S.owned[x.id]).length;
       return `<button class="tile k-shop ${open?"":"lock"}" data-a="shop" ${open?"":"disabled"}><span class="em">🛒</span><span class="tn">Cửa hàng</span>${open?"":`<span class="tp">🔒 Mở ở THCS</span>`}</button>`;
+    }
+    if(a==="pets"){
+      if(!hasVilla()) return "";
+      const all=petsAllFed();
+      return `<button class="tile k-earn ${all?"extra":""}" data-a="pets"><span class="em">${T.emo}</span><span class="tn">${T.name}</span>${petList().length?(all?"":`<span class="tp">🍖 Chưa cho ăn</span>`):`<span class="tp">Chưa có thú cưng</span>`}</button>`;
     }
     if(a==="work" && d.done.work && L.acts.includes("work")){
       const wc=d.workCount||0, more=wc<CFG.workMax;
@@ -2498,11 +2539,12 @@ async function doAct(a){
   busy=true;
   try{
     const L=lv(); let doneNow=false;
-    if(a==="sleep" && L.acts.some(x=>x!=="sleep" && !S.day.done[x])){
-      const rest=L.acts.filter(x=>x!=="sleep" && !S.day.done[x]);
-      await dialog({mascot:1,mood:"think",title:"Bé ơi, còn việc phải làm kìa!",html:`<p>Chưa ngủ được đâu nha. Bé còn phải làm: <b>${rest.map(x=>ACTS[x].emo+" "+ACTS[x].name).join(", ")}</b>.</p><p>Đi ngủ là việc làm sau cùng trong ngày.</p>`,buttons:[{label:"Làm tiếp nào",cls:"mint",val:1}]});
+    if(a==="sleep" && dayActs().some(x=>x!=="sleep" && !isDone(x))){
+      const rest=dayActs().filter(x=>x!=="sleep" && !isDone(x)).map(x=>x==="pets"?"pets2":x);
+      await dialog({mascot:1,mood:"think",title:"Bé ơi, còn việc phải làm kìa!",html:`<p>Chưa ngủ được đâu nha. Bé còn phải làm: <b>${rest.map(x=>x==="pets2"?"🏡 Cho thú cưng ăn":ACTS[x].emo+" "+ACTS[x].name).join(", ")}</b>.</p><p>Đi ngủ là việc làm sau cùng trong ngày.</p>`,buttons:[{label:"Làm tiếp nào",cls:"mint",val:1}]});
       return;
     }
+    if(a==="pets"){ await villaScene(); renderHub(); return; }
     if(a!=="shop" && !(await taskIntro(a))) return;
     if(a==="study"||a==="work"){
       const n = a==="study"?CFG.studyQ:CFG.workQ;
@@ -2519,7 +2561,7 @@ async function doAct(a){
     else if(a==="eat") doneNow=await mealScene();
     else if(a==="bath") doneNow=await bathScene();
     else if(a==="sleep"){
-      const rest=L.acts.filter(x=>x!=="sleep" && !S.day.done[x]);
+      const rest=dayActs().filter(x=>x!=="sleep" && !isDone(x) && x!=="pets");
       if(rest.length){ await dialog({mascot:1,mood:"think",title:"Bé ơi, còn việc phải làm kìa!",html:`<p>Chưa ngủ được đâu nha. Bé còn phải làm: <b>${rest.map(x=>ACTS[x].emo+" "+ACTS[x].name).join(", ")}</b>.</p><p>Đi ngủ là việc làm sau cùng trong ngày.</p>`,buttons:[{label:"Làm tiếp nào",cls:"mint",val:1}]}); return; }
       doneNow=await sleepScene();
     }
@@ -2701,7 +2743,7 @@ function refresh(){ if(!S) return; if(S.phase==="hub") renderHub(); else if(S.ph
 
 async function checkDay(){
   const L=lv();
-  if(!L.acts.every(a=>S.day.done[a])){ renderHub(); return; }
+  if(!dayActs().every(isDone)){ renderHub(); return; }
   if(L.acts.includes("work") && (S.day.workCount||0)<CFG.workMax){
     if(S.day.ready){ renderHub(); return; }
     S.day.ready=true; save();
@@ -2934,7 +2976,8 @@ function shopScene(){
       openScene("shop",`<div class="qHead"><span class="qTag riddle">🛒 Cửa hàng</span><span class="qTitle">Màu sắc sẽ được quay ngẫu nhiên khi mua!</span><button class="btn white" id="shClose" style="margin-left:auto">Đóng</button></div>
         ${S.vouchers?`<label class="tog vtog"><input type="checkbox" id="useV" ${useV?"checked":""}> 🎟️ Dùng voucher giảm 10$ (còn ${S.vouchers})</label>`:""}
         <div class="shopGrid">${(()=>{ const lim=boxLimit(), used=boxUsed(), miss=missingBadges().length, open=lim>0, pr=priceFor({price:boxPrice()});
-          return `<div class="shopItem cardBox"><span class="em">🏷️</span><b>Thẻ đổi tên</b><span class="perk">Đổi tên nhân vật, tên mới cập nhật cả trên bảng xếp hạng</span><button class="btn sun" id="buyRename">Mua ${CFG.renamePrice}$</button></div>`
+          return (hasVilla()?`<div class="shopItem cardBox"><span class="em">🐾</span><b>Thú cưng</b><span class="perk">Nhận nuôi Chó, Mèo, Thỏ, Hamster, Chim (màu ngẫu nhiên). Đang có ${petList().length}/${PET_CFG.max}</span><button class="btn sun" id="buyPet" ${petList().length>=PET_CFG.max?"disabled":""}>Mua ${PET_CFG.price}$</button></div>`:"")
+            + `<div class="shopItem cardBox"><span class="em">🏷️</span><b>Thẻ đổi tên</b><span class="perk">Đổi tên nhân vật, tên mới cập nhật cả trên bảng xếp hạng</span><button class="btn sun" id="buyRename">Mua ${CFG.renamePrice}$</button></div>`
             + `<div class="shopItem cardBox ${open?"":"lock"}"><span class="em">🎴</span><b>Hộp thẻ huy hiệu</b><span class="perk">Mở thêm 1 lượt túi mù huy hiệu ${LV_TAG[S.levelIdx]} (đã mua ${used}/${lim} lần ở cấp này)</span>
             ${!open?`<span class="tp">🔒 Mở ở ${LEVELS[CFG.boxFrom].name}</span>`: !miss?`<span class="tp ok">✓ Đã đủ huy hiệu</span>`: used>=lim?`<span class="tp">Hết lượt mua ở cấp này</span>`:`<button class="btn sun" id="buyBox">Mua ${pr}$${useV?` <s>${boxPrice()}$</s>`:""}</button>`}</div>`; })()}${SHOP.map(it=>{ const own=S.owned[it.id], open=S.levelIdx>=it.lv;
           return `<div class="shopItem ${own?"own":""} ${open?"":"lock"}"><span class="em">${it.emo}</span><b>${it.name}</b><span class="perk">${it.perk}</span>
@@ -2942,6 +2985,7 @@ function shopScene(){
         <p class="sub">Chỉ chiếc iPhone tốt nhất bé có mới được tính thêm giây.</p>`);
       $("#shClose").onclick=()=>{ closeScene(); res(); };
       const uv=$("#useV"); if(uv) uv.onchange=()=>{ useV=uv.checked; paint(); };
+      const bp=$("#buyPet"); if(bp) bp.onclick=async()=>{ if(await adoptPet()) paint(); };
       const rn=$("#buyRename"); if(rn) rn.onclick=async()=>{
         if(!canPay(CFG.renamePrice)){ toast(`Bé cần hơn ${CFG.renamePrice}$ để mua thẻ đổi tên`); return; }
         if(await renameFlow()) paint();
@@ -2961,7 +3005,8 @@ function shopScene(){
         if(!canPay(price)){ toast(`Bé cần hơn ${price}$ để mua ${it.name}`); return; }
         if(!spend(price)) return;
         if(useV){ S.vouchers--; if(!S.vouchers) useV=false; }
-        const col=pick(COLORS); S.owned[it.id]={c:col[0],h:col[1]}; save(); renderStage(); confetti(24);
+        const col=pick(COLORS); S.owned[it.id]={c:col[0],h:col[1]}; save(); renderStage(); confetti(24); persistPlayer();
+        if(it.id==="villa") later(()=>toast("🏡 Đã có biệt thự! Ô “Biệt thự thú cưng” đã xuất hiện ở danh sách việc, giờ bé có thể nhận nuôi thú cưng",4200),1600);
         const p=dialog({mascot:1,mood:"love",title:`Bé đã mua ${it.name}!`,html:`<div class="colorReveal"><span class="em">${it.emo}</span><i class="swBig" id="swBig"></i></div><p id="colTxt">Đang quay màu…</p><p>${it.perk}</p>`,buttons:[{label:"Thích quá!",cls:"mint",val:1}]});
         let k=0; const t=setInterval(()=>{ const c=COLORS[k++%COLORS.length]; const sb=$("#swBig"); if(sb) sb.style.background=c[1]; sTick(); },90);
         setTimeout(()=>{ clearInterval(t); const sb=$("#swBig"); if(sb) sb.style.background=col[1]; const ct=$("#colTxt"); if(ct) ct.innerHTML=`Màu ngẫu nhiên: <b>${col[0]}</b>`; tone([[784,.1],[1175,.25]]); },1300);
@@ -3339,6 +3384,7 @@ async function bagScene(){
   if(S.amulets) items.push({e:"🧿",n:"Bùa hộ mệnh",k:S.amulets,d:"Khi câu hỏi còn 5 giây, game sẽ hỏi bé có muốn dùng bùa để được chỉ đáp án đúng không."});
   if(S.toys&&S.toys.length) items.push({e:"🧸",n:"Đồ chơi của em bé",k:S.toys.length,d:"Những món quà bé đã tặng em: "+S.toys.join(", ")+"."});
   SHOP.filter(x=>S.owned[x.id]).forEach(x=>items.push({e:x.emo,n:x.name+(S.owned[x.id].c?` màu ${S.owned[x.id].c}`:""),k:1,d:x.perk,shop:x.id,h:S.owned[x.id].h}));
+  if(petList().length) items.push({e:"🐾",n:"Thú cưng",k:petList().length,d:"Các bạn trong biệt thự: "+petList().map(p=>`${p.n} (${PET_TYPES[p.t].n} ${p.c})`).join(", ")+"."});
   if(S.career) { const c=CAREERS.find(x=>x[0]===S.career); if(c) items.push({e:c[2],n:`Ước mơ: ${c[1]}`,k:1,d:`Các câu hỏi sẽ có thêm tình huống về nghề ${c[1].toLowerCase()}.`}); }
   const byLv={}; (S.badges||[]).forEach(b=>{ (byLv[b.level]=byLv[b.level]||[]).push(b.id); });
   openScene("bag wide",`<div class="qHead"><span class="qTag riddle">🎒 Túi đồ của ${esc(S.name)}</span><button class="btn white" id="bgClose" style="margin-left:auto">Đóng</button></div>
@@ -3612,6 +3658,13 @@ function vehSVG(id,c){
     <rect x="166" y="64" width="16" height="12" rx="4" fill="#fff4b0"/><rect x="16" y="64" width="12" height="12" rx="4" fill="#ff6b7a"/>
     <path d="M104 70 h14" stroke="${d}" stroke-width="3" stroke-linecap="round"/>
     <circle cx="55" cy="110" r="20" fill="${K}"/><circle cx="55" cy="110" r="8" fill="#c9c4d4"/><circle cx="147" cy="110" r="20" fill="${K}"/><circle cx="147" cy="110" r="8" fill="#c9c4d4"/></svg>`;
+  if(id==="villa") return `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" class="veh">
+    <ellipse cx="100" cy="134" rx="92" ry="5" fill="#000" opacity=".08"/><rect x="0" y="118" width="200" height="16" rx="8" fill="#a8e6a1"/>
+    <path d="M20 66 L100 14 L180 66 Z" fill="${c}" stroke="${d}" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="34" y="62" width="132" height="58" fill="#fff6e8" stroke="#e8cfa8" stroke-width="4"/>
+    <rect x="86" y="80" width="28" height="40" rx="12" fill="#c98b5e"/><circle cx="108" cy="100" r="3" fill="#ffd25e"/>
+    <rect x="46" y="74" width="28" height="22" rx="4" fill="#cdeeff" stroke="#e8cfa8" stroke-width="3"/><rect x="126" y="74" width="28" height="22" rx="4" fill="#cdeeff" stroke="#e8cfa8" stroke-width="3"/>
+    <text x="100" y="54" text-anchor="middle" font-size="18">🐾</text></svg>`;
   if(id==="laptop") return `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" class="veh">
     <ellipse cx="100" cy="134" rx="88" ry="5" fill="#000" opacity=".08"/>
     <rect x="34" y="12" width="132" height="90" rx="10" fill="${c}" stroke="${d}" stroke-width="4"/>
@@ -3626,11 +3679,181 @@ function vehSVG(id,c){
     <circle cx="40" cy="32" r="2.5" fill="#7fa8d6"/><circle cx="58" cy="32" r="2.5" fill="#7fa8d6"/><circle cx="40" cy="50" r="2.5" fill="#7fa8d6"/>
     <path d="M36 150 Q60 162 84 150" stroke="#fff" stroke-opacity=".5" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
 }
-function ownedShow(id){
-  const it=SHOP.find(x=>x.id===id), own=S.owned[id]||{}, isPhone=!!it.sec;
+function ownedShow(id,who){
+  who=who||{gender:S.gender,look:S.look,owned:S.owned||{}};
+  const it=SHOP.find(x=>x.id===id), own=(who.owned||{})[id]||{}, isPhone=!!it.sec;
   return dialog({cls:"vehCard",title:`${it.emo} ${esc(it.name)}${own.c?` màu ${esc(own.c)}`:""}`,
-    html:`<div class="vehShow ${isPhone?"ph":""}"><div class="vehChar">${charSVG({mood:"happy"})}</div><div class="vehItem">${vehSVG(isPhone?"phone":id,own.h)}</div></div>
+    html:`<div class="vehShow ${isPhone?"ph":""}"><div class="vehChar">${charSVG({gender:who.gender,look:who.look,mood:"happy"})}</div><div class="vehItem">${vehSVG(isPhone?"phone":id,own.h)}</div></div>
       <p>${esc(it.perk)}</p>`,buttons:[{label:"Tuyệt quá!",cls:"mint",val:1}]});
+}
+
+/* =========================================================
+   BIỆT THỰ THÚ CƯNG
+   ========================================================= */
+const PET_TYPES={
+  dog:{n:"Chó",name:"Lu Lu",e:"🐶"},
+  cat:{n:"Mèo",name:"Mimi",e:"🐱"},
+  rabbit:{n:"Thỏ",name:"Bông Bông",e:"🐰"},
+  hamster:{n:"Hamster",name:"Hạt Dẻ",e:"🐹"},
+  bird:{n:"Chim",name:"Líu Lo",e:"🐦"}
+};
+const PET_COLORS=[["Vàng kem","#f6d38b"],["Nâu","#c08a5e"],["Trắng","#f7f3ef"],["Xám","#b9b4c4"],["Đen","#5a5162"],["Hồng","#ffb3cf"],["Cam","#ffb070"],["Xanh trời","#9fd4ff"],["Tím","#c9b0ff"],["Bạc hà","#a8ecd2"]];
+const PET_CFG={price:5, feed:1, rename:2, recolor:2, max:10};
+const hasVilla = () => !!(S && S.owned && S.owned.villa);
+const petList = () => (S && S.pets) || [];
+const petFed = p => !!(S.day.petFed && S.day.petFed[p.id]);
+const petsAllFed = () => petList().length>0 && petList().every(petFed);
+/* danh sách việc trong ngày: thêm "cho thú cưng ăn" khi đã có thú cưng */
+const dayActs = () => [...lv().acts, ...(hasVilla() && petList().length ? ["pets"] : [])];
+const isDone = a => a==="pets" ? petsAllFed() : !!S.day.done[a];
+
+function petSVG(t,c,mood){
+  c=c||"#f6d38b"; const d=shade(c,-0.25), L=shade(c,0.45), K="#3a3346";
+  const happy=mood==="happy";
+  const eyes=(x1,x2,y)=> happy
+    ? `<path d="M${x1-5} ${y} q5 -6 10 0 M${x2-5} ${y} q5 -6 10 0" stroke="${K}" stroke-width="3" fill="none" stroke-linecap="round"/>`
+    : `<circle cx="${x1}" cy="${y}" r="4.5" fill="${K}"/><circle cx="${x2}" cy="${y}" r="4.5" fill="${K}"/><circle cx="${x1+1.5}" cy="${y-1.5}" r="1.5" fill="#fff"/><circle cx="${x2+1.5}" cy="${y-1.5}" r="1.5" fill="#fff"/>`;
+  const blush=(x1,x2,y)=>`<ellipse cx="${x1}" cy="${y}" rx="6" ry="3.5" fill="#ff9fb8" opacity=".7"/><ellipse cx="${x2}" cy="${y}" rx="6" ry="3.5" fill="#ff9fb8" opacity=".7"/>`;
+  const S0=`<svg viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg" class="pet"><ellipse cx="60" cy="104" rx="38" ry="5" fill="#000" opacity=".08"/>`;
+  switch(t){
+    case "dog": return S0+`<path d="M92 78 q18 -6 14 -22" stroke="${d}" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <ellipse cx="62" cy="82" rx="30" ry="20" fill="${c}" stroke="${d}" stroke-width="2"/><ellipse cx="48" cy="98" rx="7" ry="5" fill="${d}"/><ellipse cx="74" cy="98" rx="7" ry="5" fill="${d}"/>
+      <circle cx="58" cy="48" r="28" fill="${c}" stroke="${d}" stroke-width="2"/>
+      <ellipse cx="32" cy="50" rx="10" ry="19" transform="rotate(18 32 50)" fill="${d}"/><ellipse cx="84" cy="50" rx="10" ry="19" transform="rotate(-18 84 50)" fill="${d}"/>
+      <ellipse cx="58" cy="60" rx="14" ry="10" fill="${L}"/><ellipse cx="58" cy="55" rx="5" ry="4" fill="${K}"/><path d="M53 64 q5 5 10 0" stroke="${K}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      ${eyes(47,69,44)}${blush(40,76,58)}</svg>`;
+    case "cat": return S0+`<path d="M90 86 q24 -4 16 -30" stroke="${c}" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <ellipse cx="62" cy="84" rx="28" ry="19" fill="${c}" stroke="${d}" stroke-width="2"/><ellipse cx="50" cy="99" rx="7" ry="4.5" fill="${L}"/><ellipse cx="72" cy="99" rx="7" ry="4.5" fill="${L}"/>
+      <path d="M34 36 L36 10 L54 26 Z M86 36 L84 10 L66 26 Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/><path d="M39 30 L40 17 L49 26 Z M81 30 L80 17 L71 26 Z" fill="#ffb3cf"/>
+      <circle cx="60" cy="48" r="27" fill="${c}" stroke="${d}" stroke-width="2"/>
+      <path d="M57 56 l3 3 l3 -3 Z" fill="#ff8fa8"/><path d="M54 62 q6 5 12 0" stroke="${K}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M30 56 h14 M30 62 h14 M76 56 h14 M76 62 h14" stroke="${K}" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
+      ${eyes(49,71,46)}${blush(42,78,58)}</svg>`;
+    case "rabbit": return S0+`<circle cx="92" cy="84" r="8" fill="#fff" stroke="${d}" stroke-width="1.5"/>
+      <ellipse cx="62" cy="82" rx="28" ry="21" fill="${c}" stroke="${d}" stroke-width="2"/><ellipse cx="50" cy="99" rx="8" ry="5" fill="${L}"/><ellipse cx="74" cy="99" rx="8" ry="5" fill="${L}"/>
+      <ellipse cx="48" cy="20" rx="8" ry="22" transform="rotate(-10 48 20)" fill="${c}" stroke="${d}" stroke-width="2"/><ellipse cx="72" cy="20" rx="8" ry="22" transform="rotate(10 72 20)" fill="${c}" stroke="${d}" stroke-width="2"/>
+      <ellipse cx="48" cy="22" rx="3.5" ry="15" transform="rotate(-10 48 22)" fill="#ffb3cf"/><ellipse cx="72" cy="22" rx="3.5" ry="15" transform="rotate(10 72 22)" fill="#ffb3cf"/>
+      <circle cx="60" cy="52" r="25" fill="${c}" stroke="${d}" stroke-width="2"/>
+      <ellipse cx="60" cy="60" rx="3.5" ry="2.5" fill="#ff8fa8"/><path d="M55 64 q2.5 3 5 0 q2.5 3 5 0" stroke="${K}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      ${eyes(50,70,50)}${blush(43,77,60)}</svg>`;
+    case "hamster": return S0+`<ellipse cx="60" cy="68" rx="40" ry="34" fill="${c}" stroke="${d}" stroke-width="2"/>
+      <ellipse cx="60" cy="80" rx="24" ry="18" fill="${L}"/>
+      <circle cx="32" cy="38" r="9" fill="${c}" stroke="${d}" stroke-width="2"/><circle cx="88" cy="38" r="9" fill="${c}" stroke="${d}" stroke-width="2"/><circle cx="32" cy="38" r="4.5" fill="#ffb3cf"/><circle cx="88" cy="38" r="4.5" fill="#ffb3cf"/>
+      <ellipse cx="34" cy="66" rx="10" ry="8" fill="#ffc2d6" opacity=".8"/><ellipse cx="86" cy="66" rx="10" ry="8" fill="#ffc2d6" opacity=".8"/>
+      <ellipse cx="60" cy="62" rx="3.5" ry="2.5" fill="#ff8fa8"/><path d="M56 66 q4 4 8 0" stroke="${K}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <ellipse cx="46" cy="98" rx="6" ry="4" fill="#ffb3cf"/><ellipse cx="74" cy="98" rx="6" ry="4" fill="#ffb3cf"/>
+      ${eyes(48,72,54)}</svg>`;
+    default: return S0+`<path d="M60 18 q-6 -10 4 -12 q-2 6 2 10" fill="${d}"/>
+      <ellipse cx="60" cy="60" rx="34" ry="36" fill="${c}" stroke="${d}" stroke-width="2"/>
+      <ellipse cx="60" cy="72" rx="20" ry="20" fill="${L}"/>
+      <path d="M28 62 q-14 10 -4 26 q10 -4 14 -18 Z M92 62 q14 10 4 26 q-10 -4 -14 -18 Z" fill="${d}"/>
+      <path d="M52 56 L68 56 L60 66 Z" fill="#ffb020" stroke="#d98a00" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M50 96 v6 m-4 0 h8 M70 96 v6 m-4 0 h8" stroke="#ffb020" stroke-width="3" stroke-linecap="round"/>
+      ${eyes(48,72,46)}${blush(40,80,58)}</svg>`;
+  }
+}
+/* các cột hai bên nhân vật: trái thú cưng, phải vật phẩm */
+function sideColsHTML(pets,owned,clickable){
+  const p=(pets||[]).slice(0,PET_CFG.max), it=SHOP.filter(x=>owned&&owned[x.id]);
+  return `<div class="sideCol left">${p.map((x,i)=>`<button class="sideCell pCell" data-pi="${i}" title="${esc(x.n)}">${petSVG(x.t,x.h)}<span>${esc(x.n)}</span></button>`).join("")}</div>
+    <div class="sideCol right">${it.map(x=>`<button class="sideCell iCell" data-it="${x.id}" title="${esc(x.name)}" style="border-color:${owned[x.id].h||"#f6e3f0"}"><b>${x.emo}</b><span>${esc(x.name.replace("Ô tô VinFast ","").replace("iPhone ","iP "))}</span></button>`).join("")}</div>`;
+}
+function petInfo(x){
+  const T=PET_TYPES[x.t]||PET_TYPES.dog;
+  return dialog({title:`${T.e} ${esc(x.n)}`,html:`<div class="petBig">${petSVG(x.t,x.h,"happy")}</div><p>${T.n} màu ${esc(x.c||"")}</p>`,buttons:[{label:"Đóng",cls:"mint",val:1}]});
+}
+
+/* ---- nhận nuôi thú cưng ---- */
+async function adoptPet(){
+  if(!hasVilla()){ toast("Bé cần mua 🏡 Biệt thự thú cưng ở cửa hàng trước nhé"); return false; }
+  if(petList().length>=PET_CFG.max){ toast(`Biệt thự đã đủ ${PET_CFG.max} bạn rồi!`); return false; }
+  const t=await new Promise(res=>{
+    dialog({cls:"adopt",title:"🐾 Bé muốn nuôi bạn nào?",html:`<p class="sub">Mỗi bạn ${PET_CFG.price}$, màu lông được quay ngẫu nhiên.</p>
+      <div class="adoptGrid">${Object.keys(PET_TYPES).map(k=>`<button class="adoptBtn" data-pt="${k}">${petSVG(k,pick(PET_COLORS)[1])}<b>${PET_TYPES[k].n}</b></button>`).join("")}</div>`,
+      buttons:[{label:"Để sau",cls:"white",val:null}]}).then(()=>res(null));
+    document.querySelectorAll(".adoptBtn").forEach(b=>b.onclick=()=>{ $("#mDlg").classList.remove("on"); res(b.dataset.pt); });
+  });
+  if(!t) return false;
+  if(!canPay(PET_CFG.price)){ toast(`Bé cần hơn ${PET_CFG.price}$ để nhận nuôi`); return false; }
+  spend(PET_CFG.price);
+  const col=pick(PET_COLORS), T=PET_TYPES[t], same=petList().filter(p=>p.t===t).length;
+  const pet={id:Date.now().toString(36)+R(10,99), t, n:T.name+(same?" "+(same+1):""), c:col[0], h:col[1]};
+  S.pets=petList().concat([pet]); save(); confetti(24); sGood();
+  await dialog({title:`🎉 Chào bạn mới: ${esc(pet.n)}!`,html:`<div class="petBig">${petSVG(t,pet.h,"happy")}</div><p>${T.n} màu <b>${esc(pet.c)}</b>. Nhớ cho ${esc(pet.n)} ăn mỗi ngày trước khi đi ngủ nhé!</p>`,buttons:[{label:"Yêu quá!",cls:"mint",val:1}]});
+  renderStage(); persistPlayer(); return true;
+}
+function villaHouse(){
+  return `<svg viewBox="0 0 600 120" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" class="villaBg">
+    <rect width="600" height="120" fill="#dff3ff"/><circle cx="530" cy="28" r="16" fill="#ffd25e"/>
+    <ellipse cx="90" cy="30" rx="34" ry="12" fill="#fff"/><ellipse cx="400" cy="22" rx="28" ry="10" fill="#fff"/>
+    <rect y="96" width="600" height="24" fill="#a8e6a1"/>
+    <path d="M200 58 L300 10 L400 58 Z" fill="#ff8fb8" stroke="#e86f9c" stroke-width="3"/>
+    <rect x="215" y="56" width="170" height="44" fill="#fff6e8" stroke="#e8cfa8" stroke-width="3"/>
+    <rect x="286" y="68" width="28" height="32" rx="12" fill="#c98b5e"/><circle cx="308" cy="85" r="2.5" fill="#ffd25e"/>
+    <rect x="232" y="66" width="34" height="22" rx="4" fill="#cdeeff" stroke="#e8cfa8" stroke-width="3"/><rect x="334" y="66" width="34" height="22" rx="4" fill="#cdeeff" stroke="#e8cfa8" stroke-width="3"/>
+    <path d="M283 40 q17 -14 34 0" stroke="#fff" stroke-width="4" fill="none"/><text x="300" y="50" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">🐾</text>
+    <circle cx="130" cy="92" r="14" fill="#7fd08a"/><circle cx="470" cy="92" r="16" fill="#7fd08a"/><circle cx="150" cy="96" r="10" fill="#94dc9e"/></svg>`;
+}
+function villaScene(){
+  return new Promise(res=>{
+    if(!S.day.petFed) S.day.petFed={};
+    const paint=()=>{
+      const ps=petList();
+      openScene("villa wide",`<div class="qHead"><span class="qTag riddle">🏡 Biệt thự thú cưng</span><span class="qTitle">Cho ăn trước khi ngủ · +${PET_CFG.feed}$/bạn</span>
+          <button class="btn sun" id="vlAdopt" ${ps.length>=PET_CFG.max?"disabled":""}>➕ Nuôi thêm (${PET_CFG.price}$)</button><button class="btn white" id="vlClose">Đóng</button></div>
+        <div class="villaTop">${villaHouse()}</div>
+        <div class="petGrid">${ps.length?ps.map((p,i)=>`<button class="petCell ${petFed(p)?"fed":""}" data-i="${i}"><span class="pName">${esc(p.n)}</span>${petSVG(p.t,p.h,petFed(p)?"happy":"")}<span class="pState">${petFed(p)?"😋 Đã ăn":"🍖 Đói bụng"}</span></button>`).join("")
+          :`<p class="sub" style="grid-column:1/-1;text-align:center">Biệt thự còn trống. Bấm “➕ Nuôi thêm” để nhận nuôi bạn đầu tiên nhé!</p>`}</div>`);
+      $("#vlClose").onclick=()=>{ closeScene(); res(); };
+      $("#vlAdopt").onclick=async()=>{ await adoptPet(); paint(); };
+      document.querySelectorAll(".petCell").forEach(b=>b.onclick=()=>petMenu(+b.dataset.i));
+    };
+    async function petMenu(i){
+      const p=petList()[i], T=PET_TYPES[p.t], fed=petFed(p);
+      const v=await dialog({title:`${T.e} ${esc(p.n)}`,html:`<div class="petBig">${petSVG(p.t,p.h)}</div><p>${T.n} màu ${esc(p.c)}${fed?" · hôm nay đã ăn no rồi 😋":""}</p>`,
+        buttons:[...(fed?[]:[{label:`🍖 Cho ăn (+${PET_CFG.feed}$)`,cls:"mint",val:"feed"}]),{label:`✏️ Đổi tên (${PET_CFG.rename}$)`,cls:"lav",val:"name"},{label:`🎨 Đổi màu (${PET_CFG.recolor}$)`,cls:"sun",val:"color"},{label:"Đóng",cls:"white",val:null}]});
+      if(v==="feed"){
+        S.day.petFed[p.id]=true; addMoney(PET_CFG.feed); save(); paint();
+        const cell=document.querySelector(`.petCell[data-i="${i}"]`); if(cell){ cell.classList.add("eating"); cell.insertAdjacentHTML("beforeend",`<span class="food">🍖</span>`); }
+        tone([[660,.1],[880,.15]]); toast(`${p.n} ăn ngon quá! +${PET_CFG.feed}$${petsAllFed()?" · Các bạn đã ăn no hết rồi!":""}`,2200);
+      }
+      if(v==="name"){
+        const nv=await dialog({cls:"rename",title:`✏️ Đổi tên ${esc(p.n)}`,html:`<div class="babyName"><input type="text" id="pnInput" maxlength="14" value="${esc(p.n)}"></div><p class="sub">Phí ${PET_CFG.rename}$, chỉ trừ khi lưu.</p>`,buttons:[{label:"💾 Lưu",cls:"mint",val:true},{label:"Hủy",cls:"white",val:false}]});
+        const nn=(($("#pnInput")||{}).value||"").trim();
+        if(nv && nn && nn!==p.n){ if(!canPay(PET_CFG.rename)){ toast(`Cần hơn ${PET_CFG.rename}$`); } else { spend(PET_CFG.rename); p.n=nn; save(); toast(`Đã đổi tên thành ${nn}`); persistPlayer(); } }
+        paint();
+      }
+      if(v==="color"){
+        if(!canPay(PET_CFG.recolor)){ toast(`Cần hơn ${PET_CFG.recolor}$`); return; }
+        spend(PET_CFG.recolor);
+        const col=pick(PET_COLORS.filter(c=>c[1]!==p.h)); paint();
+        const cell=document.querySelector(`.petCell[data-i="${i}"]`); let k=0;
+        const tk=setInterval(()=>{ const cc=PET_COLORS[k++%PET_COLORS.length]; if(cell) cell.querySelector("svg").outerHTML=petSVG(p.t,cc[1]); sTick(); },110); sceneTimers.push(tk);
+        later(()=>{ clearInterval(tk); p.c=col[0]; p.h=col[1]; save(); paint(); tone([[784,.1],[1175,.2]]); toast(`🎨 ${p.n} có màu mới: ${col[0]}`); persistPlayer(); renderStage(); },1300);
+      }
+    }
+    paint();
+  });
+}
+
+/* ---- hồ sơ trên bảng xếp hạng: trái thú cưng, giữa nhân vật, phải vật phẩm ---- */
+function profileHTML(e){
+  const pic = e.gender && e.look ? charSVG({gender:e.gender,look:e.look,mood:"happy"}) : `<p class="sub">Chưa có dữ liệu ngoại hình</p>`;
+  return `<div class="profile"><div class="pStage">${sideColsHTML(e.pets||[],e.owned||{},true)}<div class="pChar">${pic}</div></div></div>`;
+}
+function bindProfile(e){
+  document.querySelectorAll("#dlgBox .pCell").forEach(b=>b.onclick=()=>{ const x=(e.pets||[])[+b.dataset.pi]; if(x) petInfoStack(x,e); });
+  document.querySelectorAll("#dlgBox .iCell").forEach(b=>b.onclick=()=>ownedStack(b.dataset.it,e));
+}
+/* mở popup chi tiết rồi quay lại hồ sơ */
+async function petInfoStack(x,e){ await petInfo(x); showProfile(e); }
+async function ownedStack(id,e){ await ownedShow(id,{gender:e.gender,look:e.look,owned:e.owned||{}}); showProfile(e); }
+function showProfile(e){
+  const p=dialog({cls:"rkCard wideCard",title:`${e.gender==="f"?"👧":e.gender==="m"?"👦":"🌸"} ${esc(e.name)}`,
+    html:`${profileHTML(e)}<p>${recordName(e.record.level)} · ${e.record.money}$${e.from?` · Quê hương: ${esc(e.from)}`:""}</p>
+      <p class="sub">Em bé: ${esc(e.babyName||"—")} · Bạn đồng hành: ${MASCOTS[e.buddy]?MASCOTS[e.buddy].nm:"—"} · ${(e.pets||[]).length} thú cưng</p>`,
+    buttons:[{label:"Đóng",cls:"mint",val:1}]});
+  bindProfile(e); return p;
 }
 
 /* =========================================================
@@ -3691,10 +3914,10 @@ async function getIP(){
 }
 function playerDoc(){
   return {app:"kawaii-life",v:1,name:S.name,file:S.file,createdAt:S.createdAt,ip:S.ip||"không xác định",
-    gender:S.gender,look:S.look,from:S.from||"",babyName:S.babyName,babyGender:S.babyGender,buddy:S.buddy,
+    gender:S.gender,look:S.look,pets:S.pets||[],owned:S.owned||{},from:S.from||"",babyName:S.babyName,babyGender:S.babyGender,buddy:S.buddy,
     record:S.record||{level:S.levelIdx,money:S.money,at:S.createdAt},updatedAt:new Date().toISOString(),save:S};
 }
-function docToEntry(o){ return o && o.app==="kawaii-life" ? {name:o.name,file:o.file,from:o.from||"",look:o.look||null,updatedAt:o.updatedAt||null,createdAt:o.createdAt,ip:o.ip,babyName:o.babyName,buddy:o.buddy,gender:o.gender,record:o.record} : null; }
+function docToEntry(o){ return o && o.app==="kawaii-life" ? {name:o.name,file:o.file,from:o.from||"",look:o.look||null,pets:o.pets||[],owned:o.owned||{},updatedAt:o.updatedAt||null,createdAt:o.createdAt,ip:o.ip,babyName:o.babyName,buddy:o.buddy,gender:o.gender,record:o.record} : null; }
 
 /* ---- kiểm tra trùng tên ---- */
 async function srvPost(body){
@@ -3795,15 +4018,7 @@ async function rankScene(){
       toast("Đã xóa "+b.dataset.n); paint();
     });
     const c=$("#rkConnect"); if(c) c.onclick=async()=>{ const ok = FS.dir ? await fsEnsure() : await fsConnect(); if(ok){ if(S&&S.file) await persistPlayer(); await writeRegistry(); } paint(); };
-    document.querySelectorAll(".rkName").forEach(b=>b.onclick=()=>{
-      const e=list.find(x=>x.file===b.dataset.f); if(!e) return;
-      const pic = e.gender && e.look ? charSVG({gender:e.gender,look:e.look,mood:"happy"}) : "";
-      dialog({cls:"rkCard",title:`${e.gender==="f"?"👧":e.gender==="m"?"👦":"🌸"} ${esc(e.name)}`,
-        html:`${pic?`<div class="reveal">${pic}</div>`:`<p class="sub">Bạn này chưa có dữ liệu ngoại hình (sẽ có sau khi bạn ấy hoàn thành một ngày).</p>`}
-          <p>${recordName(e.record.level)} · ${e.record.money}$${e.from?` · Quê hương: ${esc(e.from)}`:""}</p>
-          <p class="sub">Em bé: ${esc(e.babyName||"—")} · Bạn đồng hành: ${MASCOTS[e.buddy]?MASCOTS[e.buddy].nm:"—"}</p>`,
-        buttons:[{label:"Đóng",cls:"mint",val:1}]});
-    });
+    document.querySelectorAll(".rkName").forEach(b=>b.onclick=()=>{ const e=list.find(x=>x.file===b.dataset.f); if(e) showProfile(e); });
     document.querySelectorAll(".rkDel").forEach(b=>b.onclick=async()=>{
       const ok=await dialog({mascot:1,mood:"sad",title:`Xóa ${b.dataset.n}?`,html:"<p>Dữ liệu và file json của người chơi này sẽ bị xóa khỏi bảng xếp hạng.</p>",buttons:[{label:"Xóa",val:true},{label:"Thôi",cls:"white",val:false}]});
       if(!ok) return; await removePlayer(b.dataset.f);
@@ -3873,7 +4088,7 @@ function askFreeName(msg){
 async function srvSync(){
   if(syncing || !S) return; syncing=true;
   try{
-    const payload={look:S.look,from:S.from||"",gender:S.gender,babyName:S.babyName,buddy:S.buddy,record:S.record};
+    const payload={look:S.look,pets:(S.pets||[]).map(p=>({t:p.t,n:p.n,c:p.c,h:p.h})),owned:S.owned||{},from:S.from||"",gender:S.gender,babyName:S.babyName,buddy:S.buddy,record:S.record};
     if(S.token){
       const r=await srvPost({action:"update",file:S.file,token:S.token,...payload});
       if(r.data.ok) return;

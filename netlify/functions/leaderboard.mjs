@@ -21,7 +21,11 @@ const fmt = iso => {
 };
 const cleanLook = l => { if (!l || typeof l !== "object") return null; const o = {};
   for (const k of ["face", "hair", "eyes", "lips", "outfit", "shoes"]) { const v = parseInt(l[k], 10); o[k] = v >= 0 && v <= 9 ? v : null; } return o; };
-const publicEntry = e => ({ name: e.name, file: e.file, createdAt: e.createdAt, updatedAt: e.updatedAt || e.createdAt, ip: e.ip, gender: e.gender, from: e.from || "", look: e.look || null,
+const PET_T = ["dog", "cat", "rabbit", "hamster", "bird"], SHOP_IDS = ["bike", "villa", "laptop", "moto", "vf3", "ip16", "ip17", "ip18"];
+const hex = h => /^#[0-9a-f]{6}$/i.test(String(h || "")) ? h : "#cccccc";
+const cleanPets = a => Array.isArray(a) ? a.slice(0, 12).filter(x => x && PET_T.includes(x.t)).map(x => ({ t: x.t, n: clean(x.n, 14) || "Bé cưng", c: clean(x.c, 16), h: hex(x.h) })) : [];
+const cleanOwned = o => { const r = {}; if (o && typeof o === "object") for (const k of SHOP_IDS) if (o[k]) r[k] = { c: clean(o[k].c, 16), h: hex(o[k].h) }; return r; };
+const publicEntry = e => ({ pets: e.pets || [], owned: e.owned || {}, name: e.name, file: e.file, createdAt: e.createdAt, updatedAt: e.updatedAt || e.createdAt, ip: e.ip, gender: e.gender, from: e.from || "", look: e.look || null,
   babyName: e.babyName, buddy: e.buddy, record: e.record });
 function cleanRecord(r, fallbackAt) {
   const level = Math.max(0, Math.min(6, parseInt(r?.level, 10) || 0));
@@ -60,7 +64,7 @@ export default async (req, context) => {
     data.players[file] = {
       name, file, createdAt: now, ip: context.ip || req.headers.get("x-nf-client-connection-ip") || "không xác định",
       gender: body.gender === "m" ? "m" : body.gender === "f" ? "f" : null,
-      from: clean(body.from, 30), look: cleanLook(body.look), babyName: clean(body.babyName, 12), buddy: BUDDIES.includes(body.buddy) ? body.buddy : "bunny",
+      from: clean(body.from, 30), look: cleanLook(body.look), pets: cleanPets(body.pets), owned: cleanOwned(body.owned), babyName: clean(body.babyName, 12), buddy: BUDDIES.includes(body.buddy) ? body.buddy : "bunny",
       record: cleanRecord(body.record, now), updatedAt: now, token
     };
     await store.setJSON(KEY, data);
@@ -85,6 +89,8 @@ export default async (req, context) => {
     if (body.babyName != null) e.babyName = clean(body.babyName, 12);
     if (body.from != null) e.from = clean(body.from, 30);
     if (body.look) e.look = cleanLook(body.look);
+    if (body.pets) e.pets = cleanPets(body.pets);
+    if (body.owned) e.owned = cleanOwned(body.owned);
     if (body.name != null) {   // thẻ đổi tên: giữ nguyên file, chỉ đổi tên hiển thị
       const nn = clean(body.name, 16);
       if (!nn) return json({ ok: false, error: "no-name" }, 400);
